@@ -80,7 +80,8 @@
 
     .box3 {
         background-color: none;
-        
+        padding-left: 2.5vw;
+        padding-right: 2.5vw;
         border: none;
         color: white;
         text-align: center;
@@ -90,7 +91,7 @@
         -webkit-text-stroke: 0px;
     }
     .box3 h1{
-        font-size: 3.5rem;
+        font-size: 3rem;
         margin: 0;
         margin-top: 5vh;
         padding: 0;
@@ -128,9 +129,12 @@
     }
 
     /* Responsive adjustments */
-    @media (max-width: 600px) {
+    @media (max-width: 800px) {
         .container {
             grid-template-columns: 1fr;
             grid-template-rows: repeat(4, 1fr);
+        }
+        .s1d{
+            font-size: 8rem;
         }
     }
