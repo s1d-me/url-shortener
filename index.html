@@ -5,27 +5,125 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <title>s1d</title>
+
 </head>
 <body>
     <a href="#"><span class="s1d">s1d</span></a>
 <div class="container">
-    
     <div class="box box1" onclick="alert('Div 1 clicked')">
-        About
+        about
     </div>
     <div class="box box2" onclick="alert('Div 2 clicked')">
-        Login
+        panel
     </div>
-    <div class="box box3" onclick="alert('Div 3 clicked')">
+    <div class="box box3" >
         <h1><b><i>empowering</i></b> the <u>internet</u></h1>
         <p>one link at a time</p>
         <a class="yours">get yours</a>
         
     </div>
     <div class="box box4" onclick="alert('Div 4 clicked')">
-        Merch
+        contact
     </div>
+</div>
+<div class="sidebar">
+    <div class="sidebarinner">
+    <p>s1d is essential just a link shortener, on steroids.<br>does track user analytics on cookie approval. tos.<br>we provide APIs etc for business purposes too, contact us.</p>
+
+<div class="clampy" style="line-height:0px;">
+    <p>this project is powered by <a><span>Sidhant Hyperspace</span></a></p>
+    <p>Truly Open Source❤️pls donate uwu</p>
+    <p>for donating domains <span>join</span></p>
+</div>
+userful links:
+<ul>
+        <li><a href="#">Link 1</a></li>
+</ul>
+</div>
+<div class="sidebarinner">
+    <input type="radio" id="radio-orange" name="color" />
+    <label for="radio-orange">
+        <div class="radio-btn"></div>
+    </label>
+
+    <input type="radio" id="radio-yellow" name="color" />
+    <label for="radio-yellow">
+        <div class="radio-btn"></div>
+    </label>
+
+    <input type="radio" id="radio-blue" name="color" />
+    <label for="radio-blue">
+        <div class="radio-btn"></div>
+    </label>
+
+    <input type="radio" id="radio-green" name="color" />
+    <label for="radio-green">
+        <div class="radio-btn"></div>
+    </label>
+<p>i thought it would be funny to have more information about you here</p>
+
+<p id="useragent"></p>
+<p id="ipv4"><strong></strong></p>
+<span id="ipv6"></span>
+<p>
+referrer: <span id="referrer"></span>
+    <span style="display:none;" id="accept"></span>
+    screenres: <span id="screen-resolution"></span>
+    <span id="language"></span>
+    number of plugins:<span id="plugins"></span>
     
+    time zone: <span id="time-zone"></span>
+    color depth: <span id="color-depth"></span>
+    <span id="os"></span></p>    
+</div>
 </div>
 </body>
+<script>
+    function extractBrowserInfo() {
+        const referrer = document.referrer;
+        const accept = navigator.userAgentData.platform;
+        const screenResolution = `${window.screen.width}x${window.screen.height}`;
+        const language = navigator.language;
+        const plugins = navigator.plugins ? navigator.plugins.length : 'Not Available';
+
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const colorDepth = window.screen.colorDepth;
+
+        const os = navigator.userAgentData.platform;
+        const userAgent = navigator.userAgent;
+        document.getElementById('useragent').innerHTML = userAgent;
+        document.getElementById("referrer").textContent = referrer;
+        document.getElementById("accept").textContent = accept;
+        document.getElementById("screen-resolution").textContent = screenResolution;
+        document.getElementById("language").textContent = language;
+        document.getElementById("plugins").textContent = plugins;
+        document.getElementById("time-zone").textContent = timeZone;
+        document.getElementById("color-depth").textContent = colorDepth;
+        document.getElementById("os").textContent = os;
+
+        fetch("https://api.ipify.org?format=json")
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById("ipv4").textContent = data.ip;
+        })
+        .catch(error => {
+          console.error("Error fetching IP address:", error);
+          document.getElementById("ipv4").textContent = "Error fetching IP";
+        });
+
+      fetch("https://api64.ipify.org?format=json")
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById("ipv6").textContent = data.ip;
+        })
+        .catch(error => {
+          console.error("Error fetching IPv6 address:", error);
+          document.getElementById("ipv6").textContent = "Error fetching IPv6";
+        });
+    }
+
+    
+    
+    extractBrowserInfo();
+</script>
 </html>
