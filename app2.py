@@ -115,7 +115,8 @@ def shorten():
     # Check if the database has enough space
     existing_codes_count = conn.execute('SELECT COUNT(*) FROM url_mapping').fetchone()[0]
     if existing_codes_count >= total_combinations:
-        return f'No other possible combination of {length} characters with the selected options is available.', 400
+        options_message = f"Length: {length}, Allow Numbers: {allow_numbers}, Allow Special: {allow_special}, Allow Uppercase: {allow_uppercase}, Allow Lowercase: {allow_lowercase}"
+        return f'No other possible combination of {length} characters with the selected options is available. Selected options: {options_message}', 400
 
     if custom_code:
         short_code = custom_code
