@@ -122,5 +122,5 @@ def redirect_to_url(code):
 
 if __name__ == '__main__': # runs the app because that's actually the main motive
     init_db() # initializes the database (it's actually a function)
-    # port = int(os.getenv('PORT'))
-    app.run(debug=True, host='0.0.0.0', port=5000) # runs the flask app we defined earlier (probably the first line after imports)
+    port = int(os.getenv('PORT'))
+    app.run(debug=True, host='0.0.0.0', port=port) # runs the flask app we defined earlier (probably the first line after imports)
