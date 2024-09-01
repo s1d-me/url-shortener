@@ -56,7 +56,7 @@ def generate_short_code(length, allow_numbers, allow_special, allow_uppercase, a
 def home():
     return render_template('index.html')
 
-@app.route('/gen') #new route for the main page
+@app.route('/gen') #route for the gen page
 # retreives all existing url mapping from the database
 # constructs an html table with this mapping for better debugging
 # renders the html with options to generate short code lmao
