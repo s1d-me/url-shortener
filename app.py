@@ -2,6 +2,7 @@ from flask import Flask, request, redirect, url_for, render_template #imports fl
 import string # abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890
 import random # asdkljfkdajfklapqopqioi099-34939043nncbmz,n,m.,1i9238192.,X,MAOJWRU9Q0
 import sqlite3 #imports sqlite, our database manager
+import os #imports os, for environment variables and weird shit, also because HEROKU
 
 app = Flask(__name__) #flask init
 
