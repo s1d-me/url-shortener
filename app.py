@@ -53,6 +53,10 @@ def generate_short_code(length, allow_numbers, allow_special, allow_uppercase, a
     return ''.join(random.choice(characters) for _ in range(length))
 
 @app.route('/') #home page route
+def home():
+    return render_template('index.html')
+
+@app.route('/gen') #new route for the main page
 # retreives all existing url mapping from the database
 # constructs an html table with this mapping for better debugging
 # renders the html with options to generate short code lmao
@@ -62,7 +66,7 @@ def index():
     #stores all rows into 'urls'
     conn.close() #close the connections cuz we've had enough
 
-    return render_template('index.html', urls=urls) #renders the template with the urls data
+    return render_template('gen.html', urls=urls) #renders the template with the urls data
 
 @app.route('/shorten', methods=['POST']) #new route 'shorten', basically shortens the url provided in the main page
 
@@ -97,7 +101,7 @@ def shorten(): # shorts the original url based on parameters
     # can't really establish a connection with the database for long enough
     # just like how i can't emotionally and socially establish a connection with society
 
-    return redirect(url_for('index')) # redirects user back to the home page
+    return redirect(url_for('index')) # redirects user back to the main page
 
 @app.route('/<code>') # handles shortened URLs, redirects them to the original link
 
@@ -118,5 +122,5 @@ def redirect_to_url(code):
 
 if __name__ == '__main__': # runs the app because that's actually the main motive
     init_db() # initializes the database (it's actually a function)
-    port = int(os.getenv('PORT'))
-    app.run(debug=True, host='0.0.0.0', port=port) # runs the flask app we defined earlier (probably the first line after imports)
+    # port = int(os.getenv('PORT'))
+    app.run(debug=True, host='0.0.0.0', port=5000) # runs the flask app we defined earlier (probably the first line after imports)
