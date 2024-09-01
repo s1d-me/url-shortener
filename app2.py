@@ -81,7 +81,6 @@ def index():
     conn.close()
 
     return render_template('gen.html', urls=urls)
-
 @app.route('/shorten', methods=['POST'])
 def shorten():
     original_url = request.form['url']
@@ -96,6 +95,27 @@ def shorten():
     ip_address = request.remote_addr
 
     conn = get_db_connection()
+
+    # Calculate the total possible combinations
+    characters = ''
+    if allow_numbers:
+        characters += string.digits
+    if allow_special:
+        characters += string.punctuation
+    if allow_uppercase:
+        characters += string.ascii_uppercase
+    if allow_lowercase:
+        characters += string.ascii_lowercase
+
+    if not characters:
+        characters = string.ascii_letters + string.digits
+
+    total_combinations = len(characters) ** length
+
+    # Check if the database has enough space
+    existing_codes_count = conn.execute('SELECT COUNT(*) FROM url_mapping').fetchone()[0]
+    if existing_codes_count >= total_combinations:
+        return f'No other possible combination of {length} characters with the selected options is available.', 400
 
     if custom_code:
         short_code = custom_code
