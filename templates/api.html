@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border: 1px solid #ccc;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>API Documentation</h1>
+
+    <h2>Introduction</h2>
+    <p>This documentation provides information on how to use the URL shortener API.</p>
+
+    <h2>Endpoints</h2>
+
+    <h3>/api/shorten</h3>
+    <p>Shortens a URL using the API.</p>
+    <pre>
+        POST /api/shorten
+        Headers:
+            Authorization: Bearer {api_token}
+        Body:
+            {
+                "url": "http://example.com",
+                "length": 6,
+                "allow_numbers": true,
+                "allow_special": false,
+                "allow_uppercase": true,
+                "allow_lowercase": true,
+                "expiry_time": "2023-12-31 23:59:59"
+            }
+        Response:
+            {
+                "short_code": "abc123"
+            }
+    </pre>
+
+    <h3>/api/generate_token</h3>
+    <p>Generates a new API token.</p>
+    <pre>
+        POST /api/generate_token
+        Response:
+            {
+                "token": "generated_token"
+            }
+    </pre>
+
+    <h3>/api/analytics</h3>
+    <p>Gets analytics for the API token.</p>
+    <pre>
+        GET /api/analytics
+        Headers:
+            Authorization: Bearer {api_token}
+        Response:
+            {
+                "link_count": 10,
+                "click_count": 50,
+                "links": [
+                    {
+                        "short_code": "abc123",
+                        "original_url": "http://example.com",
+                        "click_count": 5,
+                        "expiry_time": "2023-12-31 23:59:59"
+                    },
+                    ...
+                ]
+            }
+    </pre>
+
+    <h2>Rate Limiting</h2>
+    <p>The API endpoints have rate limits to prevent abuse:</p>
+    <ul>
+        <li>/shorten: 10 requests per minute</li>
+        <li>/api/shorten: 50 requests per minute</li>
+    </ul>
+</body>
+</html>
