@@ -1,126 +1,340 @@
-from flask import Flask, request, redirect, url_for, render_template #imports flasks
-import string # abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890
-import random # asdkljfkdajfklapqopqioi099-34939043nncbmz,n,m.,1i9238192.,X,MAOJWRU9Q0
-import sqlite3 #imports sqlite, our database manager
-import os #imports os, for environment variables and weird shit, also because HEROKU
+from flask import Flask, request, redirect, url_for, render_template, jsonify # importing flask and some of its kids because our whole app functions on them
+import string 
+import random
+import sqlite3
+import os
+from functools import wraps
+from urllib.parse import urlparse # url parsing library
+import hashlib # password hashing
+import datetime # date time stuff
 
-app = Flask(__name__) #flask init
+app = Flask(__name__) # inits flask
 
-DATABASE = 'url_shortener.db' #sqlite init
+DATABASE = 'url_shortener.db' # main database, stores URLs, access tokens and click counts
+BLOCKED_DOMAINS_DB = 'blocked_domains.db' # blocked domains database
 
-def get_db_connection(): #connects to the database, configures data as dictionary
-    conn = sqlite3.connect(DATABASE)
+def get_db_connection(db_name): # establishes connection with two databases
+    conn = sqlite3.connect(db_name) 
     conn.row_factory = sqlite3.Row
     return conn
 
-def init_db(): #inits the database, creates "url_mapping" table if it doesn't exist
+def init_db(): # initializes both the database
     with app.app_context():
-        conn = get_db_connection()
+        conn = get_db_connection(DATABASE)
+        # creates 2 tables in the url_shortener.db if it's not already there
+        # one table consists the basic stuff like ipa, original url, clicks, tokens
+        # the other stores tokens and information regarding them
         conn.execute('''
             CREATE TABLE IF NOT EXISTS url_mapping (
                 short_code TEXT PRIMARY KEY,
                 original_url TEXT,
                 ip_address TEXT,
+                click_count INTEGER DEFAULT 0,
+                api_token TEXT,
+                expiry_time TIMESTAMP,
+                password TEXT
+            )
+        ''')
+        
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS api_tokens (
+                token TEXT PRIMARY KEY,
+                link_count INTEGER DEFAULT 0,
                 click_count INTEGER DEFAULT 0
             )
-        ''') #the table now has 4 columns, short code refers to the short code generated,
-        # original url refers to the original url which was shortened and links to the short code,
-        # ip address refers to the ip address of the user who created the short code
-        # click count refers to the number of times the short code has been clicked
-        # we're adding analytics now babyy
+        ''')
+        
         conn.commit()
+        
         conn.close()
 
-#this code checks for input values and generates a short code based on the request and parameters
+        conn = get_db_connection(BLOCKED_DOMAINS_DB) # connects to the blocked domains database
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS blocked_domains (
+                domain TEXT PRIMARY KEY
+            )
+        ''') # creates blocked domain database if it doesnt already exist
+        
+        conn.commit() 
+        
+        conn.close()
+
+
+# helper functions
+
+
+def is_valid_url(url): #checks if a url is valid using url parsing
+    try:
+        result = urlparse(url)
+        return all([result.scheme, result.netloc])
+    except ValueError:
+        return False
+
+def is_blocked_domain(url):
+    conn = get_db_connection(BLOCKED_DOMAINS_DB)
+    domain = urlparse(url).netloc
+
+    # Check if the domain or any of its subdomains are blocked
+    blocked = conn.execute('SELECT 1 FROM blocked_domains WHERE ? LIKE (domain || \'.%\') OR domain = ?', (domain, domain)).fetchone()
+    conn.close()
+    return blocked is not None
+
 def generate_short_code(length, allow_numbers, allow_special, allow_uppercase, allow_lowercase):
+    # generates short code based on user's input
     characters = ''
 
-    if allow_numbers: #checks if the user wants numbers
+    if allow_numbers:
         characters += string.digits
 
-    if allow_special: #checks if the user allows special character
+    if allow_special:
         characters += string.punctuation
 
-    if allow_uppercase: #checks if user wants uppercase char
+    if allow_uppercase:
         characters += string.ascii_uppercase
 
-    if allow_lowercase: #checks for lower case char
+    if allow_lowercase:
         characters += string.ascii_lowercase
 
-    if not characters: # if none are selected
-        characters = string.ascii_letters + string.digits  # Default to letters and digits, capital
+    if not characters:
+        characters = string.ascii_letters + string.digits
 
     return ''.join(random.choice(characters) for _ in range(length))
 
-@app.route('/') #home page route
+def require_api_token(f):
+    # Decorator function that restricts access to specific routes requiring a valid API token present in the Authorization header.
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        if not token:
+            return 'API token is missing', 401 # returns a 401 if token is missing
+
+        conn = get_db_connection(DATABASE)
+        valid_token = conn.execute('SELECT 1 FROM api_tokens WHERE token = ?', (token,)).fetchone()
+        # would only let go if the token is in the database
+        conn.close()
+
+        if not valid_token:
+            return 'Invalid API token', 403 # returns a 403 if token is not valid
+
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route('/') #main route, home page
 def home():
     return render_template('index.html')
 
-@app.route('/gen') #route for the gen page
-# retreives all existing url mapping from the database
-# constructs an html table with this mapping for better debugging
-# renders the html with options to generate short code lmao
-def index():
-    conn = get_db_connection() #establishes a connection with db
-    urls = conn.execute('SELECT * FROM url_mapping').fetchall() #fetching the URL mapping table
-    #stores all rows into 'urls'
-    conn.close() #close the connections cuz we've had enough
+@app.route('/gen') # route to the short URL generator page
+def index(): 
+    conn = get_db_connection(DATABASE) # connects with the database
+    urls = conn.execute('SELECT * FROM url_mapping').fetchall() # fetches all URLs from the database
+    conn.close()
 
-    return render_template('gen.html', urls=urls) #renders the template with the urls data
+    return render_template('gen.html', urls=urls) # shows the database in the html file
 
-@app.route('/shorten', methods=['POST']) #new route 'shorten', basically shortens the url provided in the main page
+@app.route('/shorten', methods=['POST']) # handles form submissions and generates URLs
+def shorten():
+    original_url = request.form['url']
+    custom_code = request.form.get('custom_code')
+    password = request.form.get('password')
+    expiry_time = request.form.get('expiry_time')
 
-def shorten(): # shorts the original url based on parameters
-    original_url = request.form['url'] #original url is saved because we need it to link it to the shortened url
-    custom_code = request.form.get('custom_code') # checks if any custom code was entered, if yes, then we don't proceed with randomizing
-
-    length = int(request.form['length']) #fetches for the max length of chars wanted
-    #fetches for the parameters
+    length = int(request.form['length'])
     allow_numbers = 'allow_numbers' in request.form
     allow_special = 'allow_special' in request.form
     allow_uppercase = 'allow_uppercase' in request.form
     allow_lowercase = 'allow_lowercase' in request.form
+# extracts all details from the form
 
-    # fetches for the IP address of the person shortening the email
+    if not is_valid_url(original_url):
+        return 'Invalid URL', 400
+    # if an invalid URL was given, a 400 is shown
+
+    if is_blocked_domain(original_url):
+        return 'Blocked domain', 400
+    # if a domain is blocked, a 400 is shown
+
     ip_address = request.remote_addr
+    # fetches the IP address
 
-    conn = get_db_connection() #connects with the beautiful database again
+    conn = get_db_connection(DATABASE)
+    # gets connection to the database
 
-    if custom_code: #checks if custom code was provided
+    # starts short code generation
+    characters = ''
+    if allow_numbers:
+        characters += string.digits
+    if allow_special:
+        characters += string.punctuation
+    if allow_uppercase:
+        characters += string.ascii_uppercase
+    if allow_lowercase:
+        characters += string.ascii_lowercase
+
+    if not characters: # if no custom input was provided
+        characters = string.ascii_letters + string.digits #big letter small letter and numbers
+
+    if not expiry_time: # if no expiry time was provided
+        expiry_time = None # new variable
+        
+    total_combinations = len(characters) ** length # checks for total combination possible
+
+    existing_codes_count = conn.execute('SELECT COUNT(*) FROM url_mapping').fetchone()[0] # counts total combinationation available
+    
+    if existing_codes_count >= total_combinations: # if no other combinations are possible
+        options_message = f"Length: {length}, Allow Numbers: {allow_numbers}, Allow Special: {allow_special}, Allow Uppercase: {allow_uppercase}, Allow Lowercase: {allow_lowercase}"
+        return f'No other possible combination of {length} characters with the selected options is available. Selected options: {options_message}', 400
+
+    if custom_code: # if a custom code was provided, checks if it was already given
         short_code = custom_code
         if conn.execute('SELECT 1 FROM url_mapping WHERE short_code = ?', (short_code,)).fetchone() is not None:
-            return 'Custom code already exists. Please choose another one.', 400 #generates a 400 if code already exists
-    else: # apparently no custom code was provided, it generates a random short code until it finds a unique one
+            return 'Custom code already exists. Please choose another one.', 400
+    else: # or else generates a short code
         short_code = generate_short_code(length, allow_numbers, allow_special, allow_uppercase, allow_lowercase)
         while conn.execute('SELECT 1 FROM url_mapping WHERE short_code = ?', (short_code,)).fetchone() is not None:
             short_code = generate_short_code(length, allow_numbers, allow_special, allow_uppercase, allow_lowercase)
 
-    conn.execute('INSERT INTO url_mapping (short_code, original_url, ip_address) VALUES (?, ?, ?)', (short_code, original_url, ip_address)) #stores the generated short code, original url and user's IP in the database
+    if password: # if a password was given, hashes it
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+    else: 
+        password_hash = None #if not, then does nothing
+
+    conn.execute('INSERT INTO url_mapping (short_code, original_url, ip_address, expiry_time, password) VALUES (?, ?, ?, ?, ?)',
+                 (short_code, original_url, ip_address, expiry_time, password_hash)) # commits to the database with required information
+    conn.commit() 
+    conn.close() # closes connection
+
+    return redirect(url_for('index'))
+
+@app.route('/<code>')
+def redirect_to_url(code): # for the /shortened_url redirection part
+    conn = get_db_connection(DATABASE)
+    url = conn.execute('SELECT original_url, click_count, expiry_time, password FROM url_mapping WHERE short_code = ?', (code,)).fetchone() # checks which url is the short code linked to
+
+    if url: # if url exists
+        if url['expiry_time'] and datetime.datetime.now() > datetime.datetime.strptime(url['expiry_time'], '%Y-%m-%d %H:%M:%S'): # but it is expired
+            conn.execute('DELETE FROM url_mapping WHERE short_code = ?', (code,)) # delete the URL mapping
+            conn.execute('UPDATE api_tokens SET link_count = link_count - 1 WHERE token = (SELECT api_token FROM url_mapping WHERE short_code = ?)', (code,)) # delete the links in both API and stuff
+            conn.commit() 
+            conn.close()
+            return 'URL has expired', 404
+
+        if url['password']: # and url has password
+            return render_template('password.html', code=code) # redirects to the password.html
+
+        conn.execute('UPDATE url_mapping SET click_count = click_count + 1 WHERE short_code = ?', (code,)) # increases the click count by 1
+        conn.execute('UPDATE api_tokens SET click_count = click_count + 1 WHERE token = (SELECT api_token FROM url_mapping WHERE short_code = ?)', (code,)) # in api too 
+        conn.commit()
+        conn.close()
+        return redirect(url['original_url']) # redirects to the url
+
+    else: # if url was not found
+        conn.close()
+        return 'URL not found', 404 # returns a 404
+
+@app.route('/check_password', methods=['POST']) # checks for passwords
+def check_password(): 
+    code = request.form['code']
+    password = request.form['password']
+
+    conn = get_db_connection(DATABASE)
+    url = conn.execute('SELECT original_url, password FROM url_mapping WHERE short_code = ?', (code,)).fetchone()
+
+    if url and url['password'] == hashlib.sha256(password.encode()).hexdigest():
+        conn.execute('UPDATE url_mapping SET click_count = click_count + 1 WHERE short_code = ?', (code,))
+        conn.execute('UPDATE api_tokens SET click_count = click_count + 1 WHERE token = (SELECT api_token FROM url_mapping WHERE short_code = ?)', (code,))
+        conn.commit()
+        conn.close()
+        return redirect(url['original_url'])
+
+    conn.close()
+    return 'Incorrect password', 403
+
+@app.route('/api/shorten', methods=['POST']) #API routes
+
+@require_api_token # requires the goddamn token
+def api_shorten(): #shortens url but using API
+    data = request.json
+    original_url = data.get('url')
+    length = int(data.get('length', 6))
+    allow_numbers = data.get('allow_numbers', True)
+    allow_special = data.get('allow_special', False)
+    allow_uppercase = data.get('allow_uppercase', True)
+    allow_lowercase = data.get('allow_lowercase', True)
+    expiry_time = data.get('expiry_time')
+
+    if not is_valid_url(original_url):
+        return 'Invalid URL', 400
+
+    if is_blocked_domain(original_url):
+        return 'Blocked domain', 400
+
+    ip_address = request.remote_addr
+    token = request.headers.get('Authorization')
+
+    conn = get_db_connection(DATABASE)
+
+    characters = ''
+    if allow_numbers:
+        characters += string.digits
+    if allow_special:
+        characters += string.punctuation
+    if allow_uppercase:
+        characters += string.ascii_uppercase
+    if allow_lowercase:
+        characters += string.ascii_lowercase
+
+    if not characters:
+        characters = string.ascii_letters + string.digits
+
+    total_combinations = len(characters) ** length
+
+    existing_codes_count = conn.execute('SELECT COUNT(*) FROM url_mapping').fetchone()[0]
+    if existing_codes_count >= total_combinations:
+        options_message = f"Length: {length}, Allow Numbers: {allow_numbers}, Allow Special: {allow_special}, Allow Uppercase: {allow_uppercase}, Allow Lowercase: {allow_lowercase}"
+        return f'No other possible combination of {length} characters with the selected options is available. Selected options: {options_message}', 400
+
+    short_code = generate_short_code(length, allow_numbers, allow_special, allow_uppercase, allow_lowercase)
+    while conn.execute('SELECT 1 FROM url_mapping WHERE short_code = ?', (short_code,)).fetchone() is not None:
+        short_code = generate_short_code(length, allow_numbers, allow_special, allow_uppercase, allow_lowercase)
+
+    conn.execute('INSERT INTO url_mapping (short_code, original_url, ip_address, api_token, expiry_time) VALUES (?, ?, ?, ?, ?)',
+                 (short_code, original_url, ip_address, token, expiry_time))
+    conn.execute('UPDATE api_tokens SET link_count = link_count + 1 WHERE token = ?', (token,))
     conn.commit()
-    conn.close() # closes the connection again
-    # can't really establish a connection with the database for long enough
-    # just like how i can't emotionally and socially establish a connection with society
+    conn.close()
 
-    return redirect(url_for('index')) # redirects user back to the main page
+    return {'short_code': short_code}, 201
 
-@app.route('/<code>') # handles shortened URLs, redirects them to the original link
+@app.route('/api/generate_token', methods=['POST']) # Generates a goddamn token for you
+def generate_token():
+    token = ''.join(random.choices(string.ascii_letters + string.digits, k=32))
 
-def redirect_to_url(code):
+    conn = get_db_connection(DATABASE)
+    conn.execute('INSERT INTO api_tokens (token) VALUES (?)', (token,))
+    conn.commit()
+    conn.close()
 
-    conn = get_db_connection() # connects with the database again. oh god
-    url = conn.execute('SELECT original_url, click_count FROM url_mapping WHERE short_code = ?', (code,)).fetchone() # fetches the short code from the url path and asks the database if the database has seen it somewhere
+    return {'token': token}, 201
 
-    if url: # if url is found (the database knows)
-        conn.execute('UPDATE url_mapping SET click_count = click_count + 1 WHERE short_code = ?', (code,))  # click count of the url increases by one
-        conn.commit() # commits to the database
-        conn.close() # closes the connection with the database, again
-        return redirect(url['original_url']) # redirects the user to the original url, meow
+@app.route('/api/analytics', methods=['GET'])
+@require_api_token
+def api_analytics():
+    token = request.headers.get('Authorization')
+    conn = get_db_connection(DATABASE)
 
-    else: # if url is not found (the database DOES NOT know)
-        conn.close() # closes the connection nevertheless
-        return 'URL not found', 404 # returns a 404 and lets the user know that the url was not found
+    api_data = conn.execute('SELECT link_count, click_count FROM api_tokens WHERE token = ?', (token,)).fetchone()
+    links = conn.execute('SELECT short_code, original_url, click_count, expiry_time FROM url_mapping WHERE api_token = ?', (token,)).fetchall()
 
-if __name__ == '__main__': # runs the app because that's actually the main motive
-    init_db() # initializes the database (it's actually a function)
+    analytics = {
+        'link_count': api_data['link_count'],
+        'click_count': api_data['click_count'],
+        'links': [{'short_code': link['short_code'], 'original_url': link['original_url'], 'click_count': link['click_count'], 'expiry_time': link['expiry_time']} for link in links]
+    }
+
+    conn.close()
+    return jsonify(analytics)
+
+if __name__ == '__main__':
+    init_db()
     port = int(os.getenv('PORT'))
-    app.run(debug=True, host='0.0.0.0', port=port) # runs the flask app we defined earlier (probably the first line after imports)
+    app.run(debug=True, host='0.0.0.0', port=port)
