@@ -33,10 +33,10 @@
     <pre>
         POST /api/shorten
         Headers:
-            Authorization: Bearer {api_token}
+            Authorization: (Header) {api_token}
         Body:
             {
-                "url": "http://example.com",
+                "url": "http://s1d.me/",
                 "length": 6,
                 "allow_numbers": true,
                 "allow_special": false,
@@ -73,7 +73,7 @@
                 "links": [
                     {
                         "short_code": "abc123",
-                        "original_url": "http://example.com",
+                        "original_url": "http://s1d.me/",
                         "click_count": 5,
                         "expiry_time": "2023-12-31 23:59:59"
                     },
