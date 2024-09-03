@@ -1,4 +1,5 @@
 from flask import Flask, request, redirect, url_for, render_template, jsonify, session
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import string
 import random
 import sqlite3
@@ -22,6 +23,28 @@ limiter = Limiter(
     app=app,
     default_limits=["200 per day", "50 per hour"]
 )
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+class User(UserMixin):
+    def __init__(self, id, username, password, email, tier, two_factor_secret):
+        self.id = id
+        self.username = username
+        self.password = password
+        self.email = email
+        self.tier = tier
+        self.two_factor_secret = two_factor_secret
+
+@login_manager.user_loader
+def load_user(user_id):
+    conn = get_db_connection(DATABASE)
+    user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+    conn.close()
+    if user:
+        return User(user['id'], user['username'], user['password'], user['email'], user['tier'], user['two_factor_secret'])
+    return None
 
 def get_db_connection(db_name):
     conn = sqlite3.connect(db_name)
@@ -221,8 +244,8 @@ def login():
         conn.close()
 
         if user and user['password'] == hashlib.sha256(password.encode()).hexdigest():
-            session['user_id'] = user['id']
-            session['username'] = user['username']
+            user_obj = User(user['id'], user['username'], user['password'], user['email'], user['tier'], user['two_factor_secret'])
+            login_user(user_obj)
             return redirect(url_for('dashboard'))
 
         return 'Invalid username or password', 401
@@ -230,11 +253,9 @@ def login():
     return render_template('login.html')
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user_id = session['user_id']
+    user_id = current_user.id
     conn = get_db_connection(DATABASE)
     urls = conn.execute('SELECT * FROM url_mapping WHERE user_id = ?', (user_id,)).fetchall()
     conn.close()
@@ -242,18 +263,16 @@ def dashboard():
     return render_template('dashboard.html', urls=urls)
 
 @app.route('/logout')
+@login_required
 def logout():
-    session.pop('user_id', None)
-    session.pop('username', None)
+    logout_user()
     return redirect(url_for('login'))
 
 @app.route('/shorten', methods=['POST'])
 @limiter.limit("3 per 5 second")  # Rate limit for /shorten route
+@login_required
 def shorten():
-    if 'user_id' not in session:
-        return 'You need to be logged in to shorten links', 403
-
-    user_id = session['user_id']
+    user_id = current_user.id
     tier = get_user_tier(user_id)
     link_limit = get_link_limit(tier)
 
@@ -460,11 +479,9 @@ def api_analytics():
     return jsonify(analytics)
 
 @app.route('/generate_api_token', methods=['POST'])
+@login_required
 def generate_api_token():
-    if 'user_id' not in session:
-        return 'You need to be logged in to generate an API token', 403
-
-    user_id = session['user_id']
+    user_id = current_user.id
     token = ''.join(random.choices(string.ascii_letters + string.digits, k=32))
 
     conn = get_db_connection(DATABASE)
@@ -475,11 +492,9 @@ def generate_api_token():
     return {'token': token}, 201
 
 @app.route('/api_tokens')
+@login_required
 def api_tokens():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user_id = session['user_id']
+    user_id = current_user.id
     conn = get_db_connection(DATABASE)
     tokens = conn.execute('SELECT * FROM api_tokens WHERE user_id = ?', (user_id,)).fetchall()
     conn.close()
@@ -487,11 +502,9 @@ def api_tokens():
     return render_template('api_tokens.html', tokens=tokens)
 
 @app.route('/link_analytics/<short_code>')
+@login_required
 def link_analytics(short_code):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user_id = session['user_id']
+    user_id = current_user.id
     conn = get_db_connection(DATABASE)
     link = conn.execute('SELECT * FROM url_mapping WHERE short_code = ? AND user_id = ?', (short_code, user_id)).fetchone()
     conn.close()
@@ -502,10 +515,8 @@ def link_analytics(short_code):
     return render_template('link_analytics.html', link=link)
 
 @app.route('/enable_2fa', methods=['GET', 'POST'])
+@login_required
 def enable_2fa():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
     if request.method == 'POST':
         secret = request.form['secret']
         code = request.form['code']
@@ -514,7 +525,7 @@ def enable_2fa():
         if not totp.verify(code):
             return 'Invalid code', 400
 
-        user_id = session['user_id']
+        user_id = current_user.id
         conn = get_db_connection(DATABASE)
         conn.execute('UPDATE users SET two_factor_secret = ? WHERE id = ?', (secret, user_id))
         conn.commit()
@@ -524,17 +535,15 @@ def enable_2fa():
 
     secret = pyotp.random_base32()
     totp = pyotp.TOTP(secret)
-    provisioning_uri = totp.provisioning_uri(name=session['username'], issuer_name='URL Shortener')
+    provisioning_uri = totp.provisioning_uri(name=current_user.username, issuer_name='URL Shortener')
 
     return render_template('enable_2fa.html', secret=secret, provisioning_uri=provisioning_uri)
 
 @app.route('/share_link/<short_code>', methods=['POST'])
+@login_required
 def share_link(short_code):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
     collaborator_email = request.form['collaborator_email']
-    user_id = session['user_id']
+    user_id = current_user.id
 
     conn = get_db_connection(DATABASE)
     link = conn.execute('SELECT * FROM url_mapping WHERE short_code = ? AND user_id = ?', (short_code, user_id)).fetchone()
@@ -554,12 +563,10 @@ def share_link(short_code):
     return redirect(url_for('dashboard'))
 
 @app.route('/share_on_social/<short_code>', methods=['GET'])
+@login_required
 def share_on_social(short_code):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
     conn = get_db_connection(DATABASE)
-    link = conn.execute('SELECT * FROM url_mapping WHERE short_code = ? AND user_id = ?', (short_code, session['user_id'])).fetchone()
+    link = conn.execute('SELECT * FROM url_mapping WHERE short_code = ? AND user_id = ?', (short_code, current_user.id)).fetchone()
     conn.close()
 
     if not link:
@@ -568,11 +575,9 @@ def share_on_social(short_code):
     return render_template('share_on_social.html', link=link)
 
 @app.route('/notifications')
+@login_required
 def notifications():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user_id = session['user_id']
+    user_id = current_user.id
     conn = get_db_connection(DATABASE)
     notifications = conn.execute('SELECT * FROM notifications WHERE user_id = ?', (user_id,)).fetchall()
     conn.close()
@@ -580,11 +585,9 @@ def notifications():
     return render_template('notifications.html', notifications=notifications)
 
 @app.route('/achievements')
+@login_required
 def achievements():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user_id = session['user_id']
+    user_id = current_user.id
     conn = get_db_connection(DATABASE)
     achievements = conn.execute('SELECT * FROM achievements WHERE user_id = ?', (user_id,)).fetchall()
     conn.close()
