@@ -125,6 +125,16 @@ def init_db():
         conn.commit()
         conn.close()
 
+        # Create root user
+        conn = get_db_connection(DATABASE)
+        root_user = conn.execute('SELECT * FROM users WHERE username = ?', ('root',)).fetchone()
+        if not root_user:
+            root_password_hash = hashlib.sha256('root_password'.encode()).hexdigest()
+            conn.execute('INSERT INTO users (username, password, email, tier) VALUES (?, ?, ?, ?)',
+                         ('root', root_password_hash, 'root@example.com', 'admin'))
+            conn.commit()
+        conn.close()
+
 def is_valid_url(url):
     try:
         result = urlparse(url)
@@ -187,7 +197,8 @@ def get_link_limit(tier):
     limits = {
         'free': 10,
         'premium': 100,
-        'enterprise': 1000
+        'enterprise': 1000,
+        'admin': float('inf')
     }
     return limits.get(tier, 10)
 
@@ -450,11 +461,18 @@ def api_shorten():
     return {'short_code': short_code}, 201
 
 @app.route('/api/generate_token', methods=['POST'])
+@login_required
 def generate_token():
-    token = ''.join(random.choices(string.ascii_letters + string.digits, k=32))
-
+    user_id = current_user.id
     conn = get_db_connection(DATABASE)
-    conn.execute('INSERT INTO api_tokens (token) VALUES (?)', (token,))
+    existing_token = conn.execute('SELECT token FROM api_tokens WHERE user_id = ?', (user_id,)).fetchone()
+
+    if existing_token:
+        return 'You already have an API token', 400
+
+    token = hashlib.sha256(''.join(random.choices(string.ascii_letters + string.digits, k=32)).encode()).hexdigest()
+
+    conn.execute('INSERT INTO api_tokens (token, user_id) VALUES (?, ?)', (token, user_id))
     conn.commit()
     conn.close()
 
@@ -482,9 +500,14 @@ def api_analytics():
 @login_required
 def generate_api_token():
     user_id = current_user.id
-    token = ''.join(random.choices(string.ascii_letters + string.digits, k=32))
-
     conn = get_db_connection(DATABASE)
+    existing_token = conn.execute('SELECT token FROM api_tokens WHERE user_id = ?', (user_id,)).fetchone()
+
+    if existing_token:
+        return 'You already have an API token', 400
+
+    token = hashlib.sha256(''.join(random.choices(string.ascii_letters + string.digits, k=32)).encode()).hexdigest()
+
     conn.execute('INSERT INTO api_tokens (token, user_id) VALUES (?, ?)', (token, user_id))
     conn.commit()
     conn.close()
@@ -602,7 +625,49 @@ def leaderboard():
 
     return render_template('leaderboard.html', leaders=leaders)
 
+@app.route('/admin/dashboard')
+@login_required
+def admin_dashboard():
+    if current_user.tier != 'admin':
+        return 'Access denied', 403
+
+    conn = get_db_connection(DATABASE)
+    urls = conn.execute('SELECT * FROM url_mapping').fetchall()
+    conn.close()
+
+    return render_template('admin_dashboard.html', urls=urls)
+
+@app.route('/admin/link_analytics/<short_code>')
+@login_required
+def admin_link_analytics(short_code):
+    if current_user.tier != 'admin':
+        return 'Access denied', 403
+
+    conn = get_db_connection(DATABASE)
+    link = conn.execute('SELECT * FROM url_mapping WHERE short_code = ?', (short_code,)).fetchone()
+    conn.close()
+
+    if not link:
+        return 'Link not found', 404
+
+    return render_template('link_analytics.html', link=link)
+
+@app.route('/admin/assign_tier', methods=['POST'])
+@login_required
+def assign_tier():
+    if current_user.tier != 'admin':
+        return 'Access denied', 403
+
+    user_id = request.form['user_id']
+    tier = request.form['tier']
+
+    conn = get_db_connection(DATABASE)
+    conn.execute('UPDATE users SET tier = ? WHERE id = ?', (tier, user_id))
+    conn.commit()
+    conn.close()
+
+    return 'Tier assigned successfully', 200
+
 if __name__ == '__main__':
     init_db()
-    # port = int(os.getenv('PORT'))
     app.run(debug=True, host='0.0.0.0', port=5000)
