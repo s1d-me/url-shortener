@@ -11,6 +11,8 @@ import datetime
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import pyotp
+import uuid
+import hmac
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Secret key for session management
@@ -18,10 +20,13 @@ app.secret_key = os.urandom(24)  # Secret key for session management
 DATABASE = 'url_shortener.db'
 BLOCKED_DOMAINS_DB = 'blocked_domains.db'
 
+# Load configuration from a config file
+app.config.from_pyfile('config.py')
+
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["200 per day", "50 per hour"]
+    default_limits=[app.config['DEFAULT_RATE_LIMIT']]
 )
 
 login_manager = LoginManager()
@@ -29,13 +34,14 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 class User(UserMixin):
-    def __init__(self, id, username, password, email, tier, two_factor_secret):
+    def __init__(self, id, username, password, email, tier, two_factor_secret, salt):
         self.id = id
         self.username = username
         self.password = password
         self.email = email
         self.tier = tier
         self.two_factor_secret = two_factor_secret
+        self.salt = salt
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -43,7 +49,7 @@ def load_user(user_id):
     user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
     conn.close()
     if user:
-        return User(user['id'], user['username'], user['password'], user['email'], user['tier'], user['two_factor_secret'])
+        return User(user['id'], user['username'], user['password'], user['email'], user['tier'], user['two_factor_secret'], user['salt'])
     return None
 
 def get_db_connection(db_name):
@@ -63,6 +69,7 @@ def init_db():
                 tier TEXT DEFAULT 'free',
                 two_factor_secret TEXT,
                 api_token TEXT,
+                salt TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
@@ -111,8 +118,9 @@ def init_db():
         root_user = conn.execute('SELECT * FROM users WHERE username = ?', ('root',)).fetchone()
         if not root_user:
             root_password_hash = hashlib.sha256('root_password'.encode()).hexdigest()
-            conn.execute('INSERT INTO users (username, password, email, tier) VALUES (?, ?, ?, ?)',
-                         ('root', root_password_hash, 'root@example.com', 'admin'))
+            salt = os.urandom(16).hex()
+            conn.execute('INSERT INTO users (username, password, email, tier, salt) VALUES (?, ?, ?, ?, ?)',
+                         ('root', root_password_hash, 'root@example.com', 'admin', salt))
             conn.commit()
         conn.close()
 
@@ -206,12 +214,13 @@ def register():
         if not username or not password or not email:
             return 'All fields are required', 400
 
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        salt = os.urandom(16).hex()
+        password_hash = hashlib.sha256((salt + password).encode()).hexdigest()
 
         conn = get_db_connection(DATABASE)
         try:
-            conn.execute('INSERT INTO users (username, password, email) VALUES (?, ?, ?)',
-                         (username, password_hash, email))
+            conn.execute('INSERT INTO users (username, password, email, salt) VALUES (?, ?, ?, ?)',
+                         (username, password_hash, email, salt))
             conn.commit()
         except sqlite3.IntegrityError:
             return 'Username or email already exists', 400
@@ -224,6 +233,9 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -232,19 +244,18 @@ def login():
         user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
         conn.close()
 
-        if user and user['password'] == hashlib.sha256(password.encode()).hexdigest():
-            user_obj = User(user['id'], user['username'], user['password'], user['email'], user['tier'], user['two_factor_secret'])
+        if user and hmac.compare_digest(user['password'], hashlib.sha256((user['salt'] + password).encode()).hexdigest()):
+            user_obj = User(user['id'], user['username'], user['password'], user['email'], user['tier'], user['two_factor_secret'], user['salt'])
             login_user(user_obj)
 
             if current_user.tier == 'admin':
                 return redirect(url_for('admin_dashboard'))
-            
+
             if user['two_factor_secret']:
                 return redirect(url_for('verify_2fa'))
 
             return redirect(url_for('dashboard'))
-            
-            
+
         return 'Invalid username or password', 401
 
     return render_template('login.html')
@@ -483,13 +494,13 @@ def reset_api_token():
 
     if existing_token:
         # Generate a new token
-        new_token = hashlib.sha256(''.join(random.choices(string.ascii_letters + string.digits, k=32)).encode()).hexdigest()
+        new_token = uuid.uuid4().hex
 
         # Update the token but keep the counts
         conn.execute('UPDATE api_tokens SET token = ? WHERE user_id = ?', (new_token, user_id))
     else:
         # If no token exists, create a new one
-        new_token = hashlib.sha256(''.join(random.choices(string.ascii_letters + string.digits, k=32)).encode()).hexdigest()
+        new_token = uuid.uuid4().hex
         conn.execute('INSERT INTO api_tokens (token, user_id, username) VALUES (?, ?, ?)', (new_token, user_id, current_user.username))
 
     conn.commit()
