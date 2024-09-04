@@ -121,10 +121,11 @@ def init_db():
         conn = get_db_connection(DATABASE)
         root_user = conn.execute('SELECT * FROM users WHERE username = ?', ('root',)).fetchone()
         if not root_user:
-            root_password_hash = hashlib.sha256('root_password'.encode()).hexdigest()
             salt = os.urandom(16).hex()
+            root_password_hash = hashlib.sha256((salt + 'root_password').encode()).hexdigest()
+            
             conn.execute('INSERT INTO users (username, password, email, tier, salt) VALUES (?, ?, ?, ?, ?)',
-                         ('root', root_password_hash, 'root@example.com', 'admin', salt))
+                        ('root', root_password_hash, 'root@s1d.me', 'admin', salt))
             conn.commit()
         conn.close()
 
@@ -306,14 +307,17 @@ def logout():
 @app.route('/shorten', methods=['POST'])
 @limiter.limit("1 per 1 second")  # Rate limit for /shorten route
 def shorten():
-    user_id = current_user.id
-    tier = get_user_tier(user_id)
+    user_id = current_user.id if current_user.is_authenticated else None
+    tier = get_user_tier(user_id) if user_id else 'free'
     link_limit = get_link_limit(tier)
 
     conn = get_db_connection(DATABASE)
     link_count = conn.execute('SELECT COUNT(*) FROM url_mapping WHERE user_id = ?', (user_id,)).fetchone()[0]
 
-    if link_count >= link_limit:
+    if user_id is None and link_count >= 5:
+        return 'You have reached the maximum number of links for anonymous users.', 403
+
+    if user_id is not None and link_count >= link_limit:
         return f'You have reached the maximum number of links for your tier ({tier}).', 403
 
     original_url = request.form['url']
@@ -374,12 +378,16 @@ def shorten():
         password_hash = None
 
     conn.execute('INSERT INTO url_mapping (short_code, original_url, ip_address, expiry_time, password, user_id) VALUES (?, ?, ?, ?, ?, ?)',
-                 (short_code, original_url, ip_address, expiry_time, password_hash, user_id))
+                (short_code, original_url, ip_address, expiry_time, password_hash, user_id))
     conn.commit()
     conn.close()
 
-    return redirect(url_for('dashboard'))
-
+    if user_id is not None:
+        return redirect(url_for('dashboard'))
+    
+    if user_id is None:
+        return f"The Short Code is \n https://s1d.me/{short_code}"
+    
 @app.route('/<code>')
 def redirect_to_url(code):
     conn = get_db_connection(DATABASE)
@@ -469,8 +477,11 @@ def api_shorten():
     while conn.execute('SELECT 1 FROM url_mapping WHERE short_code = ?', (short_code,)).fetchone() is not None:
         short_code = generate_short_code(length, allow_numbers, allow_uppercase, allow_lowercase)
 
-    conn.execute('INSERT INTO url_mapping (short_code, original_url, ip_address, api_token, expiry_time) VALUES (?, ?, ?, ?, ?)',
-                 (short_code, original_url, ip_address, token, expiry_time))
+    user_id = conn.execute('SELECT user_id FROM api_tokens WHERE token = ?', (token,)).fetchone()
+    user_id = user_id['user_id'] if user_id else None
+
+    conn.execute('INSERT INTO url_mapping (short_code, original_url, ip_address, api_token, expiry_time, user_id) VALUES (?, ?, ?, ?, ?, ?)',
+                 (short_code, original_url, ip_address, token, expiry_time, user_id))
     conn.execute('UPDATE api_tokens SET link_count = link_count + 1 WHERE token = ?', (token,))
     conn.commit()
     conn.close()
@@ -567,7 +578,16 @@ def enable_2fa():
     totp = pyotp.TOTP(secret)
     provisioning_uri = totp.provisioning_uri(name=current_user.username, issuer_name='URL Shortener')
 
-    return render_template('enable_2fa.html', secret=secret, provisioning_uri=provisioning_uri)
+    # Generate recovery codes
+    recovery_codes = [uuid.uuid4().hex[:8] for _ in range(5)]
+    encrypted_codes = [cipher_suite.encrypt(code.encode()).decode() for code in recovery_codes]
+
+    conn = get_db_connection(DATABASE)
+    conn.execute('UPDATE users SET recovery_codes = ? WHERE id = ?', (','.join(encrypted_codes), current_user.id))
+    conn.commit()
+    conn.close()
+
+    return render_template('enable_2fa.html', secret=secret, provisioning_uri=provisioning_uri, recovery_codes=recovery_codes)
 
 @app.route('/admin/assign_tier', methods=['GET', 'POST'])
 @login_required
