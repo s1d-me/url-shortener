@@ -13,6 +13,7 @@ from flask_limiter.util import get_remote_address
 import pyotp
 import uuid
 import hmac
+from cryptography.fernet import Fernet
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Secret key for session management
@@ -32,6 +33,10 @@ limiter = Limiter(
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+# Encryption key for API tokens
+encryption_key = Fernet.generate_key()
+cipher_suite = Fernet(encryption_key)
 
 class User(UserMixin):
     def __init__(self, id, username, password, email, tier, two_factor_secret, salt):
@@ -84,7 +89,6 @@ def init_db():
                 expiry_time TIMESTAMP,
                 password TEXT,
                 user_id INTEGER,
-                shared_with TEXT,
                 FOREIGN KEY(user_id) REFERENCES users(id)
             )
         ''')
@@ -188,6 +192,15 @@ def get_link_limit(tier):
     }
     return limits.get(tier, 10)
 
+def get_time_limit(tier):
+    limits = {
+        'free': 1,
+        'premium': 10,
+        'enterprise': 30,
+        'admin': float('inf')
+    }
+    return limits.get(tier, 1)
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -248,11 +261,11 @@ def login():
             user_obj = User(user['id'], user['username'], user['password'], user['email'], user['tier'], user['two_factor_secret'], user['salt'])
             login_user(user_obj)
 
-            if current_user.tier == 'admin':
-                return redirect(url_for('admin_dashboard'))
-
             if user['two_factor_secret']:
                 return redirect(url_for('verify_2fa'))
+
+            if current_user.tier == 'admin':
+                return redirect(url_for('admin_dashboard'))
 
             return redirect(url_for('dashboard'))
 
@@ -291,8 +304,7 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/shorten', methods=['POST'])
-@limiter.limit("3 per 5 second")  # Rate limit for /shorten route
-@login_required
+@limiter.limit("1 per 1 second")  # Rate limit for /shorten route
 def shorten():
     user_id = current_user.id
     tier = get_user_tier(user_id)
@@ -498,10 +510,12 @@ def reset_api_token():
 
         # Update the token but keep the counts
         conn.execute('UPDATE api_tokens SET token = ? WHERE user_id = ?', (new_token, user_id))
+        conn.execute('UPDATE users SET api_token = ? WHERE id = ?', (new_token, user_id))
     else:
         # If no token exists, create a new one
         new_token = uuid.uuid4().hex
         conn.execute('INSERT INTO api_tokens (token, user_id, username) VALUES (?, ?, ?)', (new_token, user_id, current_user.username))
+        conn.execute('UPDATE users SET api_token = ? WHERE id = ?', (new_token, user_id))
 
     conn.commit()
     conn.close()
@@ -604,6 +618,137 @@ def admin_link_analytics(short_code):
         return 'Link not found', 404
 
     return render_template('link_analytics.html', link=link)
+
+@app.route('/<code>/+', methods=['GET', 'POST'])
+def report_malicious_link(code):
+    conn = get_db_connection(DATABASE)
+    url = conn.execute('SELECT original_url FROM url_mapping WHERE short_code = ?', (code,)).fetchone()
+    conn.close()
+
+    if not url:
+        return 'URL not found', 404
+
+    if request.method == 'POST':
+        reason = request.form['reason']
+        conn = get_db_connection(DATABASE)
+        conn.execute('INSERT INTO reported_links (short_code, reason) VALUES (?, ?)', (code, reason))
+        conn.commit()
+        conn.close()
+        return 'Link reported successfully', 200
+
+    return render_template('report_link.html', code=code, original_url=url['original_url'])
+
+@app.route('/manage_links', methods=['GET', 'POST'])
+@login_required
+def manage_links():
+    user_id = current_user.id
+    conn = get_db_connection(DATABASE)
+
+    if request.method == 'POST':
+        action = request.form['action']
+        short_code = request.form['short_code']
+
+        if action == 'delete':
+            conn.execute('DELETE FROM url_mapping WHERE short_code = ? AND user_id = ?', (short_code, user_id))
+        elif action == 'modify':
+            original_url = request.form['url']
+            expiry_time = request.form.get('expiry_time')
+            password = request.form.get('password')
+
+            if password:
+                password_hash = hashlib.sha256(password.encode()).hexdigest()
+            else:
+                password_hash = None
+
+            conn.execute('UPDATE url_mapping SET original_url = ?, expiry_time = ?, password = ? WHERE short_code = ? AND user_id = ?',
+                         (original_url, expiry_time, password_hash, short_code, user_id))
+
+        conn.commit()
+
+    urls = conn.execute('SELECT * FROM url_mapping WHERE user_id = ?', (user_id,)).fetchall()
+    conn.close()
+
+    return render_template('manage_links.html', urls=urls)
+
+@app.route('/admin/manage_links', methods=['GET', 'POST'])
+@login_required
+def admin_manage_links():
+    if current_user.tier != 'admin':
+        return 'Access denied', 403
+
+    conn = get_db_connection(DATABASE)
+
+    if request.method == 'POST':
+        action = request.form['action']
+        short_code = request.form['short_code']
+
+        if action == 'delete':
+            conn.execute('DELETE FROM url_mapping WHERE short_code = ?', (short_code,))
+        elif action == 'modify':
+            original_url = request.form['url']
+            expiry_time = request.form.get('expiry_time')
+            password = request.form.get('password')
+
+            if password:
+                password_hash = hashlib.sha256(password.encode()).hexdigest()
+            else:
+                password_hash = None
+
+            conn.execute('UPDATE url_mapping SET original_url = ?, expiry_time = ?, password = ? WHERE short_code = ?',
+                         (original_url, expiry_time, password_hash, short_code))
+
+        conn.commit()
+
+    urls = conn.execute('SELECT * FROM url_mapping').fetchall()
+    conn.close()
+
+    return render_template('admin_manage_links.html', urls=urls)
+
+@app.route('/recovery_codes', methods=['GET', 'POST'])
+@login_required
+def recovery_codes():
+    user_id = current_user.id
+    conn = get_db_connection(DATABASE)
+
+    if request.method == 'POST':
+        codes = request.form['codes'].split(',')
+        encrypted_codes = [cipher_suite.encrypt(code.encode()).decode() for code in codes]
+        conn.execute('UPDATE users SET recovery_codes = ? WHERE id = ?', (','.join(encrypted_codes), user_id))
+        conn.commit()
+        conn.close()
+        return 'Recovery codes saved successfully', 200
+
+    recovery_codes = conn.execute('SELECT recovery_codes FROM users WHERE id = ?', (user_id,)).fetchone()
+    conn.close()
+
+    if recovery_codes and recovery_codes['recovery_codes']:
+        decrypted_codes = [cipher_suite.decrypt(code.encode()).decode() for code in recovery_codes['recovery_codes'].split(',')]
+        return render_template('recovery_codes.html', codes=decrypted_codes)
+
+    return render_template('recovery_codes.html')
+
+@app.route('/use_recovery_code', methods=['POST'])
+def use_recovery_code():
+    code = request.form['code']
+    encrypted_code = cipher_suite.encrypt(code.encode()).decode()
+
+    conn = get_db_connection(DATABASE)
+    user = conn.execute('SELECT * FROM users WHERE recovery_codes LIKE ?', (f'%{encrypted_code}%',)).fetchone()
+
+    if user:
+        recovery_codes = user['recovery_codes'].split(',')
+        recovery_codes.remove(encrypted_code)
+        conn.execute('UPDATE users SET recovery_codes = ? WHERE id = ?', (','.join(recovery_codes), user['id']))
+        conn.commit()
+        conn.close()
+
+        user_obj = User(user['id'], user['username'], user['password'], user['email'], user['tier'], user['two_factor_secret'], user['salt'])
+        login_user(user_obj)
+
+        return 'Recovery code used successfully', 200
+
+    conn.close()
+    return 'Invalid recovery code', 400
 
 if __name__ == '__main__':
     init_db()
