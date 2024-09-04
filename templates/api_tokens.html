@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Tokens</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            outline: none;
+            color: #fff;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 9px #999;
+        }
+        .button:hover {background-color: #3e8e41}
+        .button:active {
+            background-color: #3e8e41;
+            box-shadow: 0 5px #666;
+            transform: translateY(4px);
+        }
+    </style>
+</head>
+<body>
+    <h1>API Tokens</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Token</th>
+                <th>Link Count</th>
+                <th>Click Count</th>
+            </tr>
+        </thead>
+        <tbody id="token-table-body">
+            {% if tokens %}
+                {% for token in tokens %}
+                    <tr>
+                        <td>{{ token.token }}</td>
+                        <td>{{ token.link_count }}</td>
+                        <td>{{ token.click_count }}</td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="3">No API tokens found</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+    <form id="reset-token-form" action="{{ url_for('reset_api_token') }}" method="post">
+        <button type="submit" class="button">Generate New API Token</button>
+    </form>
+
+    <script>
+        document.getElementById('reset-token-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            fetch(event.target.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update the token in the table
+                const tableBody = document.getElementById('token-table-body');
+                const rows = tableBody.getElementsByTagName('tr');
+                if (rows.length > 0) {
+                    rows[0].cells[0].innerText = data.token;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>

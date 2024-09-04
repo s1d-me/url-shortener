@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign Tier</title>
+</head>
+<body>
+    <h1>Assign Tier</h1>
+    <form method="POST">
+        <label for="user_id">Select User:</label>
+        <select id="user_id" name="user_id" required>
+            {% for user in users %}
+                <option value="{{ user.id }}">{{ user.username }}</option>
+            {% endfor %}
+        </select>
+        <label for="tier">Select Tier:</label>
+        <select id="tier" name="tier" required>
+            <option value="free">Free</option>
+            <option value="premium">Premium</option>
+            <option value="enterprise">Enterprise</option>
+            <option value="admin">Admin</option>
+        </select>
+        <button type="submit">Assign Tier</button>
+    </form>
+</body>
+</html>

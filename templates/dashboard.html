@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Dashboard</h1>
+    <p>Welcome, {{ current_user.username }}!</p>
+    <h2>Your Shortened Links</h2>
+    <ul>
+        {% for url in urls %}
+            <li>
+                <a href="{{ url_for('redirect_to_url', code=url.short_code) }}">{{ url.short_code }}</a> -
+                <a href="{{ url.original_url }}">{{ url.original_url }}</a>
+                <a href="{{ url_for('link_analytics', short_code=url.short_code) }}">Analytics</a>
+            </li>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('logout') }}">Logout</a>
+</body>
+</html>
