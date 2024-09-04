@@ -62,6 +62,7 @@ def init_db():
                 email TEXT UNIQUE NOT NULL,
                 tier TEXT DEFAULT 'free',
                 two_factor_secret TEXT,
+                api_token TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
@@ -87,27 +88,7 @@ def init_db():
                 link_count INTEGER DEFAULT 0,
                 click_count INTEGER DEFAULT 0,
                 user_id INTEGER,
-                FOREIGN KEY(user_id) REFERENCES users(id)
-            )
-        ''')
-
-        conn.execute('''
-            CREATE TABLE IF NOT EXISTS notifications (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
-                message TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(user_id) REFERENCES users(id)
-            )
-        ''')
-
-        conn.execute('''
-            CREATE TABLE IF NOT EXISTS achievements (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
-                name TEXT,
-                description TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                username TEXT,
                 FOREIGN KEY(user_id) REFERENCES users(id)
             )
         ''')
@@ -150,14 +131,11 @@ def is_blocked_domain(url):
     conn.close()
     return blocked is not None
 
-def generate_short_code(length, allow_numbers, allow_special, allow_uppercase, allow_lowercase):
+def generate_short_code(length, allow_numbers, allow_uppercase, allow_lowercase):
     characters = ''
 
     if allow_numbers:
         characters += string.digits
-
-    if allow_special:
-        characters += string.punctuation
 
     if allow_uppercase:
         characters += string.ascii_uppercase
@@ -257,11 +235,33 @@ def login():
         if user and user['password'] == hashlib.sha256(password.encode()).hexdigest():
             user_obj = User(user['id'], user['username'], user['password'], user['email'], user['tier'], user['two_factor_secret'])
             login_user(user_obj)
-            return redirect(url_for('dashboard'))
 
+            if current_user.tier == 'admin':
+                return redirect(url_for('admin_dashboard'))
+            
+            if user['two_factor_secret']:
+                return redirect(url_for('verify_2fa'))
+
+            return redirect(url_for('dashboard'))
+            
+            
         return 'Invalid username or password', 401
 
     return render_template('login.html')
+
+@app.route('/verify_2fa', methods=['GET', 'POST'])
+@login_required
+def verify_2fa():
+    if request.method == 'POST':
+        code = request.form['code']
+        totp = pyotp.TOTP(current_user.two_factor_secret)
+
+        if totp.verify(code):
+            return redirect(url_for('dashboard'))
+        else:
+            return 'Invalid code', 400
+
+    return render_template('verify_2fa.html')
 
 @app.route('/dashboard')
 @login_required
@@ -303,7 +303,6 @@ def shorten():
 
     length = int(request.form['length'])
     allow_numbers = 'allow_numbers' in request.form
-    allow_special = 'allow_special' in request.form
     allow_uppercase = 'allow_uppercase' in request.form
     allow_lowercase = 'allow_lowercase' in request.form
 
@@ -318,8 +317,6 @@ def shorten():
     characters = ''
     if allow_numbers:
         characters += string.digits
-    if allow_special:
-        characters += string.punctuation
     if allow_uppercase:
         characters += string.ascii_uppercase
     if allow_lowercase:
@@ -336,7 +333,7 @@ def shorten():
     existing_codes_count = conn.execute('SELECT COUNT(*) FROM url_mapping').fetchone()[0]
 
     if existing_codes_count >= total_combinations:
-        options_message = f"Length: {length}, Allow Numbers: {allow_numbers}, Allow Special: {allow_special}, Allow Uppercase: {allow_uppercase}, Allow Lowercase: {allow_lowercase}"
+        options_message = f"Length: {length}, Allow Numbers: {allow_numbers}, Allow Uppercase: {allow_uppercase}, Allow Lowercase: {allow_lowercase}"
         return f'No other possible combination of {length} characters with the selected options is available. Selected options: {options_message}', 400
 
     if custom_code:
@@ -344,9 +341,9 @@ def shorten():
         if conn.execute('SELECT 1 FROM url_mapping WHERE short_code = ?', (short_code,)).fetchone() is not None:
             return 'Custom code already exists. Please choose another one.', 400
     else:
-        short_code = generate_short_code(length, allow_numbers, allow_special, allow_uppercase, allow_lowercase)
+        short_code = generate_short_code(length, allow_numbers, allow_uppercase, allow_lowercase)
         while conn.execute('SELECT 1 FROM url_mapping WHERE short_code = ?', (short_code,)).fetchone() is not None:
-            short_code = generate_short_code(length, allow_numbers, allow_special, allow_uppercase, allow_lowercase)
+            short_code = generate_short_code(length, allow_numbers, allow_uppercase, allow_lowercase)
 
     if password:
         password_hash = hashlib.sha256(password.encode()).hexdigest()
@@ -412,7 +409,6 @@ def api_shorten():
     original_url = data.get('url')
     length = int(data.get('length', 6))
     allow_numbers = data.get('allow_numbers', True)
-    allow_special = data.get('allow_special', False)
     allow_uppercase = data.get('allow_uppercase', True)
     allow_lowercase = data.get('allow_lowercase', True)
     expiry_time = data.get('expiry_time')
@@ -431,8 +427,6 @@ def api_shorten():
     characters = ''
     if allow_numbers:
         characters += string.digits
-    if allow_special:
-        characters += string.punctuation
     if allow_uppercase:
         characters += string.ascii_uppercase
     if allow_lowercase:
@@ -445,12 +439,12 @@ def api_shorten():
 
     existing_codes_count = conn.execute('SELECT COUNT(*) FROM url_mapping').fetchone()[0]
     if existing_codes_count >= total_combinations:
-        options_message = f"Length: {length}, Allow Numbers: {allow_numbers}, Allow Special: {allow_special}, Allow Uppercase: {allow_uppercase}, Allow Lowercase: {allow_lowercase}"
+        options_message = f"Length: {length}, Allow Numbers: {allow_numbers}, Allow Uppercase: {allow_uppercase}, Allow Lowercase: {allow_lowercase}"
         return f'No other possible combination of {length} characters with the selected options is available. Selected options: {options_message}', 400
 
-    short_code = generate_short_code(length, allow_numbers, allow_special, allow_uppercase, allow_lowercase)
+    short_code = generate_short_code(length, allow_numbers, allow_uppercase, allow_lowercase)
     while conn.execute('SELECT 1 FROM url_mapping WHERE short_code = ?', (short_code,)).fetchone() is not None:
-        short_code = generate_short_code(length, allow_numbers, allow_special, allow_uppercase, allow_lowercase)
+        short_code = generate_short_code(length, allow_numbers, allow_uppercase, allow_lowercase)
 
     conn.execute('INSERT INTO url_mapping (short_code, original_url, ip_address, api_token, expiry_time) VALUES (?, ?, ?, ?, ?)',
                  (short_code, original_url, ip_address, token, expiry_time))
@@ -459,24 +453,6 @@ def api_shorten():
     conn.close()
 
     return {'short_code': short_code}, 201
-
-@app.route('/api/generate_token', methods=['POST'])
-@login_required
-def generate_token():
-    user_id = current_user.id
-    conn = get_db_connection(DATABASE)
-    existing_token = conn.execute('SELECT token FROM api_tokens WHERE user_id = ?', (user_id,)).fetchone()
-
-    if existing_token:
-        return 'You already have an API token', 400
-
-    token = hashlib.sha256(''.join(random.choices(string.ascii_letters + string.digits, k=32)).encode()).hexdigest()
-
-    conn.execute('INSERT INTO api_tokens (token, user_id) VALUES (?, ?)', (token, user_id))
-    conn.commit()
-    conn.close()
-
-    return {'token': token}, 201
 
 @app.route('/api/analytics', methods=['GET'])
 @require_api_token
@@ -496,23 +472,30 @@ def api_analytics():
     conn.close()
     return jsonify(analytics)
 
-@app.route('/generate_api_token', methods=['POST'])
+@app.route('/reset_api_token', methods=['POST'])
 @login_required
-def generate_api_token():
+def reset_api_token():
     user_id = current_user.id
     conn = get_db_connection(DATABASE)
-    existing_token = conn.execute('SELECT token FROM api_tokens WHERE user_id = ?', (user_id,)).fetchone()
+
+    # Retrieve the current token and its counts
+    existing_token = conn.execute('SELECT token, link_count, click_count FROM api_tokens WHERE user_id = ?', (user_id,)).fetchone()
 
     if existing_token:
-        return 'You already have an API token', 400
+        # Generate a new token
+        new_token = hashlib.sha256(''.join(random.choices(string.ascii_letters + string.digits, k=32)).encode()).hexdigest()
 
-    token = hashlib.sha256(''.join(random.choices(string.ascii_letters + string.digits, k=32)).encode()).hexdigest()
+        # Update the token but keep the counts
+        conn.execute('UPDATE api_tokens SET token = ? WHERE user_id = ?', (new_token, user_id))
+    else:
+        # If no token exists, create a new one
+        new_token = hashlib.sha256(''.join(random.choices(string.ascii_letters + string.digits, k=32)).encode()).hexdigest()
+        conn.execute('INSERT INTO api_tokens (token, user_id, username) VALUES (?, ?, ?)', (new_token, user_id, current_user.username))
 
-    conn.execute('INSERT INTO api_tokens (token, user_id) VALUES (?, ?)', (token, user_id))
     conn.commit()
     conn.close()
 
-    return {'token': token}, 201
+    return {'token': new_token}, 201
 
 @app.route('/api_tokens')
 @login_required
@@ -521,7 +504,6 @@ def api_tokens():
     conn = get_db_connection(DATABASE)
     tokens = conn.execute('SELECT * FROM api_tokens WHERE user_id = ?', (user_id,)).fetchall()
     conn.close()
-
     return render_template('api_tokens.html', tokens=tokens)
 
 @app.route('/link_analytics/<short_code>')
@@ -562,68 +544,28 @@ def enable_2fa():
 
     return render_template('enable_2fa.html', secret=secret, provisioning_uri=provisioning_uri)
 
-@app.route('/share_link/<short_code>', methods=['POST'])
+@app.route('/admin/assign_tier', methods=['GET', 'POST'])
 @login_required
-def share_link(short_code):
-    collaborator_email = request.form['collaborator_email']
-    user_id = current_user.id
+def assign_tier():
+    if current_user.tier != 'admin':
+        return 'Access denied', 403
+
+    if request.method == 'POST':
+        user_id = request.form['user_id']
+        tier = request.form['tier']
+
+        conn = get_db_connection(DATABASE)
+        conn.execute('UPDATE users SET tier = ? WHERE id = ?', (tier, user_id))
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for('admin_dashboard'))
 
     conn = get_db_connection(DATABASE)
-    link = conn.execute('SELECT * FROM url_mapping WHERE short_code = ? AND user_id = ?', (short_code, user_id)).fetchone()
-
-    if not link:
-        return 'Link not found', 404
-
-    collaborator = conn.execute('SELECT * FROM users WHERE email = ?', (collaborator_email,)).fetchone()
-
-    if not collaborator:
-        return 'Collaborator not found', 404
-
-    conn.execute('UPDATE url_mapping SET shared_with = ? WHERE short_code = ?', (collaborator_email, short_code))
-    conn.commit()
+    users = conn.execute('SELECT id, username, tier FROM users').fetchall()
     conn.close()
 
-    return redirect(url_for('dashboard'))
-
-@app.route('/share_on_social/<short_code>', methods=['GET'])
-@login_required
-def share_on_social(short_code):
-    conn = get_db_connection(DATABASE)
-    link = conn.execute('SELECT * FROM url_mapping WHERE short_code = ? AND user_id = ?', (short_code, current_user.id)).fetchone()
-    conn.close()
-
-    if not link:
-        return 'Link not found', 404
-
-    return render_template('share_on_social.html', link=link)
-
-@app.route('/notifications')
-@login_required
-def notifications():
-    user_id = current_user.id
-    conn = get_db_connection(DATABASE)
-    notifications = conn.execute('SELECT * FROM notifications WHERE user_id = ?', (user_id,)).fetchall()
-    conn.close()
-
-    return render_template('notifications.html', notifications=notifications)
-
-@app.route('/achievements')
-@login_required
-def achievements():
-    user_id = current_user.id
-    conn = get_db_connection(DATABASE)
-    achievements = conn.execute('SELECT * FROM achievements WHERE user_id = ?', (user_id,)).fetchall()
-    conn.close()
-
-    return render_template('achievements.html', achievements=achievements)
-
-@app.route('/leaderboard')
-def leaderboard():
-    conn = get_db_connection(DATABASE)
-    leaders = conn.execute('SELECT username, COUNT(*) as link_count FROM url_mapping JOIN users ON url_mapping.user_id = users.id GROUP BY user_id ORDER BY link_count DESC LIMIT 10').fetchall()
-    conn.close()
-
-    return render_template('leaderboard.html', leaders=leaders)
+    return render_template('assign_tier.html', users=users)
 
 @app.route('/admin/dashboard')
 @login_required
@@ -651,22 +593,6 @@ def admin_link_analytics(short_code):
         return 'Link not found', 404
 
     return render_template('link_analytics.html', link=link)
-
-@app.route('/admin/assign_tier', methods=['POST'])
-@login_required
-def assign_tier():
-    if current_user.tier != 'admin':
-        return 'Access denied', 403
-
-    user_id = request.form['user_id']
-    tier = request.form['tier']
-
-    conn = get_db_connection(DATABASE)
-    conn.execute('UPDATE users SET tier = ? WHERE id = ?', (tier, user_id))
-    conn.commit()
-    conn.close()
-
-    return 'Tier assigned successfully', 200
 
 if __name__ == '__main__':
     init_db()
