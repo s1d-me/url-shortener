@@ -75,6 +75,7 @@ def init_db():
                 two_factor_secret TEXT,
                 api_token TEXT,
                 salt TEXT,
+                recovery_codes TEXT, 
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
@@ -192,15 +193,6 @@ def get_link_limit(tier):
         'admin': float('inf')
     }
     return limits.get(tier, 10)
-
-def get_time_limit(tier):
-    limits = {
-        'free': 1,
-        'premium': 10,
-        'enterprise': 30,
-        'admin': float('inf')
-    }
-    return limits.get(tier, 1)
 
 @app.route('/')
 def home():
@@ -443,7 +435,14 @@ def api_shorten():
     allow_uppercase = data.get('allow_uppercase', True)
     allow_lowercase = data.get('allow_lowercase', True)
     expiry_time = data.get('expiry_time')
-
+    
+    user_id = conn.execute('SELECT user_id FROM api_tokens WHERE token = ?', (token,)).fetchone()
+    tier = get_user_tier(user_id) if user_id else 'free'
+    link_limit = get_link_limit(tier)
+    
+    if user_id is not None and link_count >= link_limit:
+        return f'You have reached the maximum number of links for your tier ({tier}).', 403
+    
     if not is_valid_url(original_url):
         return 'Invalid URL', 400
 
@@ -477,9 +476,12 @@ def api_shorten():
     while conn.execute('SELECT 1 FROM url_mapping WHERE short_code = ?', (short_code,)).fetchone() is not None:
         short_code = generate_short_code(length, allow_numbers, allow_uppercase, allow_lowercase)
 
-    user_id = conn.execute('SELECT user_id FROM api_tokens WHERE token = ?', (token,)).fetchone()
+    
     user_id = user_id['user_id'] if user_id else None
 
+    
+    
+        
     conn.execute('INSERT INTO url_mapping (short_code, original_url, ip_address, api_token, expiry_time, user_id) VALUES (?, ?, ?, ?, ?, ?)',
                  (short_code, original_url, ip_address, token, expiry_time, user_id))
     conn.execute('UPDATE api_tokens SET link_count = link_count + 1 WHERE token = ?', (token,))
@@ -772,5 +774,5 @@ def use_recovery_code():
 
 if __name__ == '__main__':
     init_db()
-    port = int(os.getenv('PORT'))
-    app.run(debug=True, host='0.0.0.0', port=port)
+    # port = int(os.getenv('PORT'))
+    app.run(debug=True, host='0.0.0.0', port=5000)
