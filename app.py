@@ -203,6 +203,21 @@ def get_rate_limit(tier):
     }
     return limits.get(tier, app.config['DEFAULT_RATE_LIMIT'])
 
+def apply_rate_limit(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        user_id = current_user.id if current_user.is_authenticated else None
+        tier = get_user_tier(user_id) if user_id else 'free'
+        rate_limit = get_rate_limit(tier)
+
+        print(f"Applying rate limit: {rate_limit}")
+        print(f"User tier: {tier}")
+
+        limiter.limit(rate_limit)(f)
+
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -306,18 +321,8 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/shorten', methods=['POST'])
-@limiter.limit("1 per 1 second")  # Default rate limit for anonymous users
+@apply_rate_limit
 def shorten():
-    user_id = current_user.id if current_user.is_authenticated else None
-    tier = get_user_tier(user_id) if user_id else 'free'
-    rate_limit = get_rate_limit(tier)
-
-    print(f"Applying rate limit: {rate_limit}")
-    print(f"User tier:{tier}")# Debug statement
-
-    # Apply the rate limit based on the user's tier
-    limiter.limit(rate_limit)(shorten_internal)
-
     return shorten_internal()
 
 def shorten_internal():
@@ -448,16 +453,8 @@ def check_password():
 
 @app.route('/api/shorten', methods=['POST'])
 @require_api_token
+@apply_rate_limit
 def api_shorten():
-    user_id = current_user.id if current_user.is_authenticated else None
-    tier = get_user_tier(user_id) if user_id else 'free'
-    rate_limit = get_rate_limit(tier)
-
-    print(f"Applying rate limit: {rate_limit}")  # Debug statement
-    print(f"User tier: {tier}")# Debug statement
-
-    limiter.limit(rate_limit)(api_shorten_internal)
-
     return api_shorten_internal()
 
 def api_shorten_internal():
