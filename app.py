@@ -187,12 +187,21 @@ def get_user_tier(user_id):
 
 def get_link_limit(tier):
     limits = {
-        'free': 10,
-        'premium': 100,
-        'enterprise': 1000,
+        'free': 10000,
+        'premium': 100000,
+        'enterprise': 1000000,
         'admin': float('inf')
     }
     return limits.get(tier, 10)
+
+def get_rate_limit(tier):
+    limits = {
+        'free': app.config['FREE_TIER_RATE_LIMIT'],
+        'premium': app.config['PREMIUM_TIER_RATE_LIMIT'],
+        'enterprise': app.config['ENTERPRISE_TIER_RATE_LIMIT'],
+        'admin': app.config['ADMIN_TIER_RATE_LIMIT']
+    }
+    return limits.get(tier, app.config['DEFAULT_RATE_LIMIT'])
 
 @app.route('/')
 def home():
@@ -295,10 +304,19 @@ def dashboard():
 def logout():
     logout_user()
     return redirect(url_for('login'))
-
 @app.route('/shorten', methods=['POST'])
-@limiter.limit("1 per 1 second")  # Rate limit for /shorten route
+@limiter.limit("1 per 1 second")  # Default rate limit for anonymous users
 def shorten():
+    user_id = current_user.id if current_user.is_authenticated else None
+    tier = get_user_tier(user_id) if user_id else 'free'
+    rate_limit = get_rate_limit(tier)
+
+    # Apply the rate limit based on the user's tier
+    limiter.limit(rate_limit)(shorten_internal)
+
+    return shorten_internal()
+
+def shorten_internal():
     user_id = current_user.id if current_user.is_authenticated else None
     tier = get_user_tier(user_id) if user_id else 'free'
     link_limit = get_link_limit(tier)
@@ -376,7 +394,7 @@ def shorten():
 
     if user_id is not None:
         return redirect(url_for('dashboard'))
-    
+
     if user_id is None:
         return f"The Short Code is \n https://s1d.me/{short_code}"
     
@@ -426,8 +444,16 @@ def check_password():
 
 @app.route('/api/shorten', methods=['POST'])
 @require_api_token
-@limiter.limit("50 per minute")  # Rate limit for /api/shorten route
 def api_shorten():
+    user_id = current_user.id if current_user.is_authenticated else None
+    tier = get_user_tier(user_id) if user_id else 'free'
+    rate_limit = get_rate_limit(tier)
+
+    limiter.limit(rate_limit)(api_shorten_internal)
+
+    return api_shorten_internal()
+
+def api_shorten_internal():
     data = request.json
     original_url = data.get('url')
     length = int(data.get('length', 6))
@@ -435,24 +461,34 @@ def api_shorten():
     allow_uppercase = data.get('allow_uppercase', True)
     allow_lowercase = data.get('allow_lowercase', True)
     expiry_time = data.get('expiry_time')
-    
-    user_id = conn.execute('SELECT user_id FROM api_tokens WHERE token = ?', (token,)).fetchone()
-    tier = get_user_tier(user_id) if user_id else 'free'
-    link_limit = get_link_limit(tier)
-    
-    if user_id is not None and link_count >= link_limit:
-        return f'You have reached the maximum number of links for your tier ({tier}).', 403
-    
-    if not is_valid_url(original_url):
-        return 'Invalid URL', 400
 
-    if is_blocked_domain(original_url):
-        return 'Blocked domain', 400
+    conn = get_db_connection(DATABASE)
 
     ip_address = request.remote_addr
     token = request.headers.get('Authorization')
 
-    conn = get_db_connection(DATABASE)
+    user_id_row = conn.execute('SELECT user_id FROM api_tokens WHERE token = ?', (token,)).fetchone()
+    if user_id_row is None:
+        conn.close()
+        return 'Invalid API token', 403
+
+    user_id = user_id_row['user_id']
+    tier = get_user_tier(user_id)
+    link_limit = get_link_limit(tier)
+
+    link_count = conn.execute('SELECT COUNT(*) FROM url_mapping WHERE user_id = ?', (user_id,)).fetchone()[0]
+
+    if link_count >= link_limit:
+        conn.close()
+        return f'You have reached the maximum number of links for your tier ({tier}).', 403
+
+    if not is_valid_url(original_url):
+        conn.close()
+        return 'Invalid URL', 400
+
+    if is_blocked_domain(original_url):
+        conn.close()
+        return 'Blocked domain', 400
 
     characters = ''
     if allow_numbers:
@@ -470,18 +506,13 @@ def api_shorten():
     existing_codes_count = conn.execute('SELECT COUNT(*) FROM url_mapping').fetchone()[0]
     if existing_codes_count >= total_combinations:
         options_message = f"Length: {length}, Allow Numbers: {allow_numbers}, Allow Uppercase: {allow_uppercase}, Allow Lowercase: {allow_lowercase}"
+        conn.close()
         return f'No other possible combination of {length} characters with the selected options is available. Selected options: {options_message}', 400
 
     short_code = generate_short_code(length, allow_numbers, allow_uppercase, allow_lowercase)
     while conn.execute('SELECT 1 FROM url_mapping WHERE short_code = ?', (short_code,)).fetchone() is not None:
         short_code = generate_short_code(length, allow_numbers, allow_uppercase, allow_lowercase)
 
-    
-    user_id = user_id['user_id'] if user_id else None
-
-    
-    
-        
     conn.execute('INSERT INTO url_mapping (short_code, original_url, ip_address, api_token, expiry_time, user_id) VALUES (?, ?, ?, ?, ?, ?)',
                  (short_code, original_url, ip_address, token, expiry_time, user_id))
     conn.execute('UPDATE api_tokens SET link_count = link_count + 1 WHERE token = ?', (token,))
