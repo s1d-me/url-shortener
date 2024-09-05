@@ -75,7 +75,7 @@ def init_db():
                 two_factor_secret TEXT,
                 api_token TEXT,
                 salt TEXT,
-                recovery_codes TEXT, 
+                recovery_codes TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
@@ -124,7 +124,7 @@ def init_db():
         if not root_user:
             salt = os.urandom(16).hex()
             root_password_hash = hashlib.sha256((salt + 'root_password').encode()).hexdigest()
-            
+
             conn.execute('INSERT INTO users (username, password, email, tier, salt) VALUES (?, ?, ?, ?, ?)',
                         ('root', root_password_hash, 'root@s1d.me', 'admin', salt))
             conn.commit()
@@ -304,12 +304,16 @@ def dashboard():
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
 @app.route('/shorten', methods=['POST'])
 @limiter.limit("1 per 1 second")  # Default rate limit for anonymous users
 def shorten():
     user_id = current_user.id if current_user.is_authenticated else None
     tier = get_user_tier(user_id) if user_id else 'free'
     rate_limit = get_rate_limit(tier)
+
+    print(f"Applying rate limit: {rate_limit}")
+    print(f"User tier:{tier}")# Debug statement
 
     # Apply the rate limit based on the user's tier
     limiter.limit(rate_limit)(shorten_internal)
@@ -397,7 +401,7 @@ def shorten_internal():
 
     if user_id is None:
         return f"The Short Code is \n https://s1d.me/{short_code}"
-    
+
 @app.route('/<code>')
 def redirect_to_url(code):
     conn = get_db_connection(DATABASE)
@@ -448,6 +452,9 @@ def api_shorten():
     user_id = current_user.id if current_user.is_authenticated else None
     tier = get_user_tier(user_id) if user_id else 'free'
     rate_limit = get_rate_limit(tier)
+
+    print(f"Applying rate limit: {rate_limit}")  # Debug statement
+    print(f"User tier: {tier}")# Debug statement
 
     limiter.limit(rate_limit)(api_shorten_internal)
 
@@ -805,5 +812,4 @@ def use_recovery_code():
 
 if __name__ == '__main__':
     init_db()
-    # port = int(os.getenv('PORT'))
     app.run(debug=True, host='0.0.0.0', port=5000)
