@@ -8,8 +8,6 @@ from functools import wraps
 from urllib.parse import urlparse
 import hashlib
 import datetime
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 import pyotp
 import uuid
 import hmac
@@ -23,12 +21,6 @@ BLOCKED_DOMAINS_DB = 'blocked_domains.db'
 
 # Load configuration from a config file
 app.config.from_pyfile('config.py')
-
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=[app.config['DEFAULT_RATE_LIMIT']]
-)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -145,6 +137,12 @@ def is_blocked_domain(url):
     conn.close()
     return blocked is not None
 
+def get_user_tier(user_id):
+    conn = get_db_connection(DATABASE)
+    user = conn.execute('SELECT tier FROM users WHERE id = ?', (user_id,)).fetchone()
+    conn.close()
+    return user['tier'] if user else 'anon'
+
 def generate_short_code(length, allow_numbers, allow_uppercase, allow_lowercase):
     characters = ''
 
@@ -175,45 +173,6 @@ def require_api_token(f):
 
         if not valid_token:
             return 'Invalid API token', 403
-
-        return f(*args, **kwargs)
-    return decorated_function
-
-def get_user_tier(user_id):
-    conn = get_db_connection(DATABASE)
-    user = conn.execute('SELECT tier FROM users WHERE id = ?', (user_id,)).fetchone()
-    conn.close()
-    return user['tier'] if user else 'free'
-
-def get_link_limit(tier):
-    limits = {
-        'free': 10000,
-        'premium': 100000,
-        'enterprise': 1000000,
-        'admin': float('inf')
-    }
-    return limits.get(tier, 10)
-
-def get_rate_limit(tier):
-    limits = {
-        'free': app.config['FREE_TIER_RATE_LIMIT'],
-        'premium': app.config['PREMIUM_TIER_RATE_LIMIT'],
-        'enterprise': app.config['ENTERPRISE_TIER_RATE_LIMIT'],
-        'admin': app.config['ADMIN_TIER_RATE_LIMIT']
-    }
-    return limits.get(tier, app.config['DEFAULT_RATE_LIMIT'])
-
-def apply_rate_limit(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        user_id = current_user.id if current_user.is_authenticated else None
-        tier = get_user_tier(user_id) if user_id else 'free'
-        rate_limit = get_rate_limit(tier)
-
-        print(f"Applying rate limit: {rate_limit}")
-        print(f"User tier: {tier}")
-
-        limiter.limit(rate_limit)(f)
 
         return f(*args, **kwargs)
     return decorated_function
@@ -321,23 +280,13 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/shorten', methods=['POST'])
-@apply_rate_limit
 def shorten():
     return shorten_internal()
 
 def shorten_internal():
     user_id = current_user.id if current_user.is_authenticated else None
-    tier = get_user_tier(user_id) if user_id else 'free'
-    link_limit = get_link_limit(tier)
 
     conn = get_db_connection(DATABASE)
-    link_count = conn.execute('SELECT COUNT(*) FROM url_mapping WHERE user_id = ?', (user_id,)).fetchone()[0]
-
-    if user_id is None and link_count >= 5:
-        return 'You have reached the maximum number of links for anonymous users.', 403
-
-    if user_id is not None and link_count >= link_limit:
-        return f'You have reached the maximum number of links for your tier ({tier}).', 403
 
     original_url = request.form['url']
     custom_code = request.form.get('custom_code')
@@ -453,7 +402,6 @@ def check_password():
 
 @app.route('/api/shorten', methods=['POST'])
 @require_api_token
-@apply_rate_limit
 def api_shorten():
     return api_shorten_internal()
 
@@ -477,14 +425,6 @@ def api_shorten_internal():
         return 'Invalid API token', 403
 
     user_id = user_id_row['user_id']
-    tier = get_user_tier(user_id)
-    link_limit = get_link_limit(tier)
-
-    link_count = conn.execute('SELECT COUNT(*) FROM url_mapping WHERE user_id = ?', (user_id,)).fetchone()[0]
-
-    if link_count >= link_limit:
-        conn.close()
-        return f'You have reached the maximum number of links for your tier ({tier}).', 403
 
     if not is_valid_url(original_url):
         conn.close()
