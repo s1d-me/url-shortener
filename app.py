@@ -1,5 +1,7 @@
 from flask import Flask, request, redirect, url_for, render_template, jsonify, session
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import string
 import random
 import sqlite3
@@ -29,6 +31,13 @@ login_manager.login_view = 'login'
 # Encryption key for API tokens
 encryption_key = Fernet.generate_key()
 cipher_suite = Fernet(encryption_key)
+
+# Initialize Limiter
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"]
+)
 
 class User(UserMixin):
     def __init__(self, id, username, password, email, tier, two_factor_secret, salt):
@@ -177,6 +186,30 @@ def require_api_token(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def get_rate_limit(tier):
+    limits = {
+        'free': app.config['FREE_TIER_RATE_LIMIT'],
+        'premium': app.config['PREMIUM_TIER_RATE_LIMIT'],
+        'enterprise': app.config['ENTERPRISE_TIER_RATE_LIMIT'],
+        'admin': app.config['ADMIN_TIER_RATE_LIMIT']
+    }
+    return limits.get(tier, app.config['DEFAULT_RATE_LIMIT'])
+
+def apply_rate_limit(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        user_id = current_user.id if current_user.is_authenticated else None
+        tier = get_user_tier(user_id) if user_id else 'free'
+        rate_limit = get_rate_limit(tier)
+
+        print(f"Applying rate limit: {rate_limit}")
+        print(f"User tier: {tier}")
+
+        limiter.limit(rate_limit)(f)
+
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -280,6 +313,7 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/shorten', methods=['POST'])
+@apply_rate_limit
 def shorten():
     return shorten_internal()
 
@@ -402,6 +436,7 @@ def check_password():
 
 @app.route('/api/shorten', methods=['POST'])
 @require_api_token
+@apply_rate_limit
 def api_shorten():
     return api_shorten_internal()
 
