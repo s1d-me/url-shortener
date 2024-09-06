@@ -150,7 +150,7 @@ def get_user_tier(user_id):
     conn = get_db_connection(DATABASE)
     user = conn.execute('SELECT tier FROM users WHERE id = ?', (user_id,)).fetchone()
     conn.close()
-    return user['tier'] if user else 'anon'
+    return user['tier'] if user else None
 
 def generate_short_code(length, allow_numbers, allow_uppercase, allow_lowercase):
     characters = ''
@@ -205,9 +205,7 @@ def apply_rate_limit(f):
         print(f"Applying rate limit: {rate_limit}")
         print(f"User tier: {tier}")
 
-        limiter.limit(rate_limit)(f)
-
-        return f(*args, **kwargs)
+        return limiter.limit(rate_limit)(f)(*args, **kwargs)
     return decorated_function
 
 @app.route('/')
