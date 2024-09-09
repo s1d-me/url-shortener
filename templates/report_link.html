@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Link</title>
+</head>
+<body>
+    <h1>Report Malicious Link</h1>
+    <p>This link will take you to: <a href="{{ original_url }}" target="_blank">{{ original_url }}</a></p>
+    <form action="{{ url_for('report_malicious_link', code=code) }}" method="POST">
+        <label for="reason">Reason:</label>
+        <textarea name="reason" id="reason" required></textarea><br><br>
+        <button type="submit">Report</button>
+    </form>
+    <br>
+    <a href="{{ original_url }}">Go to URL</a>
+</body>
+</html>

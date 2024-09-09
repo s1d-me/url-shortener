@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+</head>
+<body>
+    <h1>Admin Dashboard</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Short Code</th>
+                <th>Original URL</th>
+                <th>IP Address</th>
+                <th>Click Count</th>
+                <th>Expiry Time</th>
+                <th>User ID</th>
+                <th>Shared With</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for url in urls %}
+                <tr>
+                    <td>{{ url.short_code }}</td>
+                    <td>{{ url.original_url }}</td>
+                    <td>{{ url.ip_address }}</td>
+                    <td>{{ url.click_count }}</td>
+                    <td>{{ url.expiry_time }}</td>
+                    <td>{{ url.user_id }}</td>
+                    <td>{{ url.shared_with }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

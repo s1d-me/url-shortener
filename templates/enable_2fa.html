@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enable 2FA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+Mono+TC&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #121212;
+            color: #1fd655;
+            font-family: "LXGW WenKai Mono TC", monospace;
+            margin: 2rem;
+        }
+
+        .title {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: 0.06vw;
+        }
+
+        .navbar {
+            background-color: #121212;
+            border-bottom: 1px solid #333;
+        }
+
+        .navbar-brand {
+            color: #1fd655;
+            font-size: 1.5rem;
+        }
+
+        .navbar-nav .nav-link {
+            color: #1fd655;
+            margin-right: 1rem;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #fff;
+        }
+
+        .container {
+            max-width: 80vw;
+            margin: auto;
+        }
+
+        .section-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            align-items: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .section-grid h2 {
+            margin: 0;
+        }
+
+        .section-grid .btn {
+            margin: auto;
+            position: relative;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        hr {
+            margin-bottom: 2rem;
+            color: #fff;
+            background-color: #2f2f2f;
+            height: 0.06vw;
+            width: 90vw;
+        }
+
+        .btn {
+            background-color: transparent;
+            color: #fff;
+            border: solid #1fd655 0.5vh;
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            margin: 0.5rem;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #1fd655;
+            font-weight: 600;
+            color: black;
+        }
+
+        .logout {
+            border-color: red;
+        }
+
+        .logout:hover {
+            background-color: red;
+        }
+
+        .tfa {
+            border-color: #b148d2;
+        }
+
+        .tfa:hover {
+            background-color: #b148d2;
+        }
+
+        .header-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .header-grid .title {
+            text-align: left;
+        }
+
+        .header-grid .username {
+            text-align: right;
+        }
+
+        .username {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .inner-username {
+            color: #d4ff3c;
+        }
+
+        .qr-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 2rem;
+        }
+
+        .qr-container img {
+            max-width: 100%;
+            height: auto;
+            border: solid 0.25em #000;
+            padding: 1.25vh;
+            border-style:dashed;
+            border-radius: 0.75em;
+            background-color: #fff;
+            
+        }
+
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center!important;
+            margin-top: 2rem;
+        }
+
+        .form-container input {
+            position: relative;
+            left:50%;
+            transform: translate(-50%);
+            width: 80%;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border: 1px solid #1fd655;
+            border-radius: 0.5rem;
+            background-color: #121212;
+            color: #fff;
+        }
+
+        .form-container button {
+            width: 80%;
+            position: relative;
+            left:50%;
+            transform: translate(-50%);
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border: 1px solid #1fd655;
+            border-radius: 0.5rem;
+            background-color: #1fd655;
+            color: #000;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .form-container button:hover {
+            background-color: #1e1e1e;
+            color: #1fd655;
+        }
+
+        @media (max-width: 768px) {
+            .section-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+
+            .header-grid {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .header-grid .title, .header-grid .username {
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand" href="{{ url_for('home') }}">s1d</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('index') }}">Shorten</a>
+                </li>
+
+                {% if current_user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                </li>
+                {%endif%}
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('api') }}">API Docs</a>
+                </li>
+
+                {% if current_user.tier == 'admin' %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('assign_tier') }}">Assign Tier</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_manage_links') }}">Manage Links</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="header-grid">
+            <h1 class="title">Enable 2FA</h1>
+            <p class="username">Welcome, <span class="inner-username">{{ current_user.username }}</span>!</p>
+        </div>
+
+        <div class="qr-container">
+            <p>Scan the QR code with your authenticator app:</p>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?data={{ provisioning_uri }}" alt="QR Code">
+        </div>
+
+        <div class="form-container">
+            <form method="POST">
+                <input type="hidden" name="secret" value="{{ secret }}">
+                <input type="text" id="code" name="code" placeholder="Enter 6 Digit Code" pattern="\d{6}" required>
+                <button type="submit">Enable 2FA</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

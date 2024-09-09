@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener API Documentation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+Mono+TC&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #121212;
+            color: #1fd655;
+            font-family: "LXGW WenKai Mono TC", monospace;
+            margin: 2rem;
+        }
+
+        .navbar {
+            background-color: #121212;
+            border-bottom: 1px solid #333;
+        }
+
+        .navbar-brand {
+            color: #1fd655;
+            font-size: 1.5rem;
+        }
+
+        .navbar-nav .nav-link {
+            color: #1fd655;
+            margin-right: 1rem;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #fff;
+        }
+
+        .container {
+            max-width: 80vw;
+            margin: auto;
+        }
+
+        h1, h2, h3 {
+            color: #1fd655;
+        }
+
+        pre {
+            background-color: #1e1e1e;
+            padding: 10px;
+            border: 1px solid #333;
+            overflow-x: auto;
+            color: #fff;
+        }
+
+        .endpoint {
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background-color: transparent;
+            color: #fff;
+            border: solid #1fd655 0.5vh;
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            margin: 0.5rem;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #1fd655;
+            font-weight: 600;
+            color: black;
+        }
+
+        .logout {
+            border-color: red;
+        }
+
+        .logout:hover {
+            background-color: red;
+        }
+
+        .tfa {
+            border-color: #b148d2;
+        }
+
+        .tfa:hover {
+            background-color: #b148d2;
+        }
+
+        .apitok {
+            border-color: #37caf5;
+        }
+
+        .apitok:hover {
+            background-color: #37caf5;
+        }
+
+        .apiex {
+            border-color: #fdc500;
+        }
+
+        .apiex:hover {
+            background-color: #fdc500;
+        }
+
+        @media (max-width: 768px) {
+            .section-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+
+            .header-grid {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .header-grid .title, .header-grid .username {
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand" href="{{ url_for('home') }}">s1d</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('index') }}">Shorten</a>
+                </li>
+                {% if current_user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                </li>
+                {%endif%}
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('api') }}">API Docs</a>
+                </li>
+
+                {% if current_user.tier == 'admin' %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('assign_tier') }}">Assign Tier</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_manage_links') }}">Manage Links</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h1>URL Shortener API Documentation</h1>
+
+        <h2>Introduction</h2>
+        <p>This documentation provides information on how to use the URL shortener API. The API allows you to shorten URLs, generate API tokens, and retrieve analytics for your shortened links.</p>
+
+        <h2>Endpoints</h2>
+
+        <div class="endpoint">
+            <h3>/api/shorten</h3>
+            <p>Shortens a URL using the API.</p>
+            <pre>
+                POST /api/shorten
+                Headers:
+                    Authorization: {api_token}
+                Body:
+                    {
+                        "url": "http://s1d.me/",
+                        "length": 6,
+                        "allow_numbers": true,
+                        "allow_uppercase": true,
+                        "allow_lowercase": true,
+                        "expiry_time": "2023-12-31 23:59:59"
+                    }
+                Response:
+                    {
+                        "short_code": "abc123"
+                    }
+            </pre>
+            <h4>Example using curl</h4>
+            <pre>
+                curl -X POST https://s1d.me/api/shorten \
+                    -H "Authorization: your_api_token" \
+                    -H "Content-Type: application/json" \
+                    -d '{
+                        "url": "http://s1d.me/",
+                        "length": 6,
+                        "allow_numbers": true,
+                        "allow_uppercase": true,
+                        "allow_lowercase": true,
+                        "expiry_time": "2023-12-31 23:59:59"
+                    }'
+            </pre>
+            <h4>Example using Python</h4>
+            <pre>
+                import requests
+
+                url = "https://s1d.me/api/shorten"
+                headers = {
+                    "Authorization": "your_api_token",
+                    "Content-Type": "application/json"
+                }
+                data = {
+                    "url": "http://s1d.me/",
+                    "length": 6,
+                    "allow_numbers": True,
+                    "allow_uppercase": True,
+                    "allow_lowercase": True,
+                    "expiry_time": "2023-12-31 23:59:59"
+                }
+
+                response = requests.post(url, headers=headers, json=data)
+                print(response.json())
+            </pre>
+        </div>
+
+        <div class="endpoint">
+            <h3>/api/analytics</h3>
+            <p>Gets analytics for the API token.</p>
+            <pre>
+                GET /api/analytics
+                Headers:
+                    Authorization: {api_token}
+                Response:
+                    {
+                        "link_count": 10,
+                        "click_count": 50,
+                        "links": [
+                            {
+                                "short_code": "abc123",
+                                "original_url": "http://s1d.me/",
+                                "click_count": 5,
+                                "expiry_time": "2023-12-31 23:59:59"
+                            },
+                            ...
+                        ]
+                    }
+            </pre>
+            <h4>Example using curl</h4>
+            <pre>
+                curl -X GET https://s1d.me/api/analytics \
+                    -H "Authorization: your_api_token"
+            </pre>
+            <h4>Example using Python</h4>
+            <pre>
+                import requests
+
+                url = "https://s1d.me/api/analytics"
+                headers = {
+                    "Authorization": "your_api_token"
+                }
+
+                response = requests.get(url, headers=headers)
+                print(response.json())
+            </pre>
+        </div>
+
+        <div class="endpoint">
+            <h3>/api/reset_api_token</h3>
+            <p>Resets the API token for the authenticated user.</p>
+            <pre>
+                POST /api/reset_api_token
+                Headers:
+                    Authorization: {api_token}
+                Response:
+                    {
+                        "token": "new_api_token"
+                    }
+            </pre>
+            <h4>Example using curl</h4>
+            <pre>
+                curl -X POST https://s1d.me/api/reset_api_token \
+                    -H "Authorization: your_api_token"
+            </pre>
+            <h4>Example using Python</h4>
+            <pre>
+                import requests
+
+                url = "https://s1d.me/api/reset_api_token"
+                headers = {
+                    "Authorization": "your_api_token"
+                }
+
+                response = requests.post(url, headers=headers)
+                print(response.json())
+            </pre>
+        </div>
+
+        <div class="endpoint">
+            <h3>/api/link_analytics/{short_code}</h3>
+            <p>Gets analytics for a specific shortened link.</p>
+            <pre>
+                GET /api/link_analytics/{short_code}
+                Headers:
+                    Authorization: {api_token}
+                Response:
+                    {
+                        "short_code": "abc123",
+                        "original_url": "http://s1d.me/",
+                        "click_count": 5,
+                        "expiry_time": "2023-12-31 23:59:59"
+                    }
+            </pre>
+            <h4>Example using curl</h4>
+            <pre>
+                curl -X GET https://s1d.me/api/link_analytics/abc123 \
+                    -H "Authorization: your_api_token"
+            </pre>
+            <h4>Example using Python</h4>
+            <pre>
+                import requests
+
+                url = "https://s1d.me/api/link_analytics/abc123"
+                headers = {
+                    "Authorization": "your_api_token"
+                }
+
+                response = requests.get(url, headers=headers)
+                print(response.json())
+            </pre>
+        </div>
+
+        <h2>Rate Limiting</h2>
+        <p>The API endpoints have rate limits to prevent abuse:</p>
+        <ul>
+            <li>/shorten: 10 requests per minute</li>
+            <li>/api/shorten: 50 requests per minute</li>
+            <li>/api/analytics: 20 requests per hour</li>
+            <li>/api/reset_api_token: 5 requests per day</li>
+            <li>/api/link_analytics/{short_code}: 30 requests per hour</li>
+        </ul>
+
+        <h2>Authentication</h2>
+        <p>Most API endpoints require authentication. You need to include the API token in the Authorization header of your requests.</p>
+        <pre>
+            Authorization: {api_token}
+        </pre>
+
+        <h2>Error Handling</h2>
+        <p>The API returns standard HTTP status codes to indicate the success or failure of the request. Here are some common status codes:</p>
+        <ul>
+            <li>200 OK: The request was successful.</li>
+            <li>201 Created: The request was successful and a new resource was created.</li>
+            <li>400 Bad Request: The request could not be understood or was missing required parameters.</li>
+            <li>401 Unauthorized: Authentication is required and has failed or has not yet been provided.</li>
+            <li>403 Forbidden: The server understood the request, but refuses to authorize it.</li>
+            <li>404 Not Found: The server can not find the requested resource.</li>
+            <li>429 Too Many Requests: The user has sent too many requests in a given amount of time.</li>
+            <li>500 Internal Server Error: The server encountered an unexpected condition that prevented it from fulfilling the request.</li>
+        </ul>
+
+        <h2>Examples</h2>
+
+        <h3>Shorten a URL</h3>
+        <h4>Example using curl</h4>
+        <pre>
+            curl -X POST https://s1d.me/api/shorten \
+                -H "Authorization: your_api_token" \
+                -H "Content-Type: application/json" \
+                -d '{
+                    "url": "http://s1d.me/",
+                    "length": 6,
+                    "allow_numbers": true,
+                    "allow_uppercase": true,
+                    "allow_lowercase": true,
+                    "expiry_time": "2023-12-31 23:59:59"
+                }'
+        </pre>
+        <h4>Example using Python</h4>
+        <pre>
+            import requests
+
+            url = "https://s1d.me/api/shorten"
+            headers = {
+                "Authorization": "your_api_token",
+                "Content-Type": "application/json"
+            }
+            data = {
+                "url": "http://s1d.me/",
+                "length": 6,
+                "allow_numbers": True,
+                "allow_uppercase": True,
+                "allow_lowercase": True,
+                "expiry_time": "2023-12-31 23:59:59"
+            }
+
+            response = requests.post(url, headers=headers, json=data)
+            print(response.json())
+        </pre>
+
+        <h3>Get Analytics</h3>
+        <h4>Example using curl</h4>
+        <pre>
+            curl -X GET https://s1d.me/api/analytics \
+                -H "Authorization: your_api_token"
+        </pre>
+        <h4>Example using Python</h4>
+        <pre>
+            import requests
+
+            url = "https://s1d.me/api/analytics"
+            headers = {
+                "Authorization": "your_api_token"
+            }
+
+            response = requests.get(url, headers=headers)
+            print(response.json())
+        </pre>
+
+        <h3>Reset API Token</h3>
+        <h4>Example using curl</h4>
+        <pre>
+            curl -X POST https://s1d.me/api/reset_api_token \
+                -H "Authorization: your_api_token"
+        </pre>
+        <h4>Example using Python</h4>
+        <pre>
+            import requests
+
+            url = "https://s1d.me/api/reset_api_token"
+            headers = {
+                "Authorization": "your_api_token"
+            }
+
+            response = requests.post(url, headers=headers)
+            print(response.json())
+        </pre>
+
+        <h3>Get Link Analytics</h3>
+        <h4>Example using curl</h4>
+        <pre>
+            curl -X GET https://s1d.me/api/link_analytics/abc123 \
+                -H "Authorization: your_api_token"
+        </pre>
+        <h4>Example using Python</h4>
+        <pre lang="python" numberLines="true" outlining="true" class="brush: python">
+            import requests
+
+            url = "https://s1d.me/api/link_analytics/abc123"
+            headers = {
+                "Authorization": "your_api_token"
+            }
+
+            response = requests.get(url, headers=headers)
+            print(response.json())
+        </pre>
+
+        <h2>Contact</h2>
+        <p>If you have any questions or need further assistance, please contact me at sarthaksidhantisopolice@gmail.com</p>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/SyntaxHighlighter/3.0.83/scripts/shBrushPython.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Link Analytics</title>
+</head>
+<body>
+    <h1>Link Analytics</h1>
+    <p>Short Code: {{ link.short_code }}</p>
+    <p>Original URL: <a href="{{ link.original_url }}">{{ link.original_url }}</a></p>
+    <p>Click Count: {{ link.click_count }}</p>
+    <p>Expiry Time: {{ link.expiry_time }}</p>
+    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+</body>
+</html>
