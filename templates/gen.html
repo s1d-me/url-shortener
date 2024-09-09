@@ -1,47 +1,261 @@
 <!doctype html>
-<title>URL Shortener</title>
-<h1>URL Shortener</h1>
-<form action="/shorten" method="post">
-    <label for="url">Enter URL:</label>
-    <input type="text" id="url" name="url" required><br><br>
-    <label for="custom_code">Custom Code (optional):</label>
-    <input type="text" id="custom_code" name="custom_code"><br><br>
-    <label for="length">Max Length:</label>
-    <input type="number" id="length" name="length" min="1" value="6"><br><br>
-    <label for="allow_numbers">Allow Numbers:</label>
-    <input type="checkbox" id="allow_numbers" name="allow_numbers" checked><br><br>
-    <label for="allow_special">Allow Special Characters:</label>
-    <input type="checkbox" id="allow_special" name="allow_special"><br><br>
-    <label for="allow_uppercase">Allow Uppercase Letters:</label>
-    <input type="checkbox" id="allow_uppercase" name="allow_uppercase" checked><br><br>
-    <label for="allow_lowercase">Allow Lowercase Letters:</label>
-    <input type="checkbox" id="allow_lowercase" name="allow_lowercase" checked><br><br>
-    <label for="expiry_time">Expiry Time (optional, format: YYYY-MM-DD HH:MM:SS):</label>
-    <input type="text" id="expiry_time" name="expiry_time"><br><br>
-    <label for="password">Password (optional):</label>
-    <input type="password" id="password" name="password"><br><br>
-    <button type="submit">Shorten</button>
-</form>
-<h2>Shortened URLs</h2>
-<table border="1">
-    <tr>
-        <th>Short Code</th>
-        <th>Shortened URL</th>
-        <th>Original URL</th>
-        <th>IP Address</th>
-        <th>Click Count</th>
-        <th>Expiry Time</th>
-        <th>Password Protected</th>
-    </tr>
-    {% for row in urls %}
-    <tr>
-        <td>{{ row.short_code }}</td>
-        <td><a href="{{ url_for('redirect_to_url', code=row.short_code, _external=True) }}" target="_blank">{{ url_for('redirect_to_url', code=row.short_code, _external=True) }}</a></td>
-        <td>{{ row.original_url }}</td>
-        <td>{{ row.ip_address }}</td>
-        <td>{{ row.click_count }}</td>
-        <td>{{ row.expiry_time }}</td>
-        <td>{{ 'Yes' if row.password else 'No' }}</td>
-    </tr>
-    {% endfor %}
-</table>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=LXGW+WenKai+Mono+TC&display=swap');
+
+        /* Base styles */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'LXGW WenKai Mono TC', monospace;
+            background-color: #121212;
+            color: #E0E0E0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1, h2 {
+            color: #1fd655;
+            text-align: center;
+            font-size: 2em;
+            margin-top: 3vh;
+        }
+
+        /* Form styles */
+        form {
+            background-color: #1f1f1f;
+            border: 1px solid #1fd655;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 40px;
+            width: 80%;
+            max-width: 600px;
+        }
+
+        label {
+            font-size: 1.1em;
+            display: block;
+            margin-bottom: 10px;
+            color: #a5a5a5;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="password"],
+        button {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 1em;
+            color: #E0E0E0;
+            background-color: #262626;
+            border: 1px solid #1fd655;
+            border-radius: 8px;
+            outline: none;
+            box-shadow: 0 0 5px #1fd655;
+        }
+
+        input[type="checkbox"] {
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        input[type="checkbox"] + label {
+            margin-top: 0;
+            display: inline-block;
+        }
+
+        button {
+            cursor: pointer;
+            background-color: #1fd655;
+            border: none;
+            transition: background-color 0.3s ease;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #17b345;
+        }
+
+        /* Table styles */
+        table {
+            border-collapse: collapse;
+            width: 90vw;
+            max-width: 90vw;
+            margin-bottom: 40px;
+            background-color: #1f1f1f;
+            border-radius: 12px;
+            overflow: hidden;
+            text-wrap: pretty;
+        }
+
+        th, td {
+            border: 1px solid #1fd655;
+            padding: 10px;
+            text-align: center;
+            max-width: 20vw;text-wrap: wrap;
+        }
+
+        th {
+            background-color: #262626;
+            color: #1fd655;
+        }
+
+        td {
+            color: #a5a5a5;
+        }
+
+        a {
+            color: #1fd655;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #17b345;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            form, table {
+                width: 100%;
+            }
+
+            input[type="text"],
+            input[type="number"],
+            input[type="password"],
+            button {
+                width: calc(100% - 10px);
+            }
+
+            table th, table td {
+                padding: 8px;
+            }
+        }
+
+        /* Navbar Styles */
+        .navbar {
+            background-color: #121212;
+            border-bottom: 1px solid #333;
+        }
+
+        .navbar-brand {
+            color: #1fd655;
+            font-size: 1.5rem;
+        }
+
+        .navbar-nav .nav-link {
+            color: #1fd655;
+            margin-right: 1rem;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand" href="{{ url_for('home') }}">s1d</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('index') }}">Shorten</a>
+                </li>
+                {% if current_user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                </li>
+                {%endif%}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('api') }}">API Docs</a>
+                </li>
+
+                {% if current_user.tier == 'admin' %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('assign_tier') }}">Assign Tier</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_manage_links') }}">Manage Links</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <h1>URL Shortener</h1>
+    <form action="/shorten" method="post">
+        <label for="url">Enter URL:</label>
+        <input type="text" id="url" name="url" required>
+
+        <label for="custom_code">Custom Code (optional):</label>
+        <input type="text" id="custom_code" name="custom_code">
+
+        <label for="length">Max Length:</label>
+        <input type="number" id="length" name="length" min="1" value="6">
+
+        <label for="allow_numbers">Allow Numbers:</label>
+        <input type="checkbox" id="allow_numbers" name="allow_numbers" checked>
+        <label for="allow_numbers">Yes</label><br>
+
+        <label for="allow_uppercase">Allow Uppercase Letters:</label>
+        <input type="checkbox" id="allow_uppercase" name="allow_uppercase" checked>
+        <label for="allow_uppercase">Yes</label><br>
+
+        <label for="allow_lowercase">Allow Lowercase Letters:</label>
+        <input type="checkbox" id="allow_lowercase" name="allow_lowercase" checked>
+        <label for="allow_lowercase">Yes</label><br>
+
+        <label for="expiry_time">Expiry Time (optional, format: YYYY-MM-DD HH:MM:SS):</label>
+        <input type="text" id="expiry_time" name="expiry_time">
+
+        <label for="password">Password (optional):</label>
+        <input type="password" id="password" name="password">
+
+        <button type="submit">Shorten</button>
+    </form>
+
+    <h2>Shortened URLs</h2>
+    <table>
+        <tr>
+            <th>Short Code</th>
+            <th>Shortened URL</th>
+            <th>Original URL</th>
+            <th>IP Address</th>
+            <th>Click Count</th>
+            <th>Expiry Time</th>
+            <th>Password Protected</th>
+        </tr>
+        {% for row in urls %}
+        <tr>
+            <td>{{ row.short_code }}</td>
+            <td><a href="{{ url_for('redirect_to_url', code=row.short_code, _external=True) }}" target="_blank">{{ url_for('redirect_to_url', code=row.short_code, _external=True) }}</a></td>
+            <td>{{ row.original_url }}</td>
+            <td>{{ row.ip_address }}</td>
+            <td>{{ row.click_count }}</td>
+            <td>{{ row.expiry_time }}</td>
+            <td>{{ 'Yes' if row.password else 'No' }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
