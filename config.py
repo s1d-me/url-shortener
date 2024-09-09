@@ -15,6 +15,7 @@ DB_HOST = 'your_database_host'
 DB_PORT = 'your_database_port'
 
 # Rate limits for different tiers
+ANON_RATE_LIMIT = "1 per 5 seconds, 5 per day"
 FREE_TIER_RATE_LIMIT = "1 per 2 seconds, 20 per hour, 50 per day, 1000 per month, 10000 per year"
 PREMIUM_TIER_RATE_LIMIT = "2 per second, 50 per hour, 100 per day, 2000 per month, 20000 per year"
 ENTERPRISE_TIER_RATE_LIMIT = "5 per second, 100 per hour, 200 per day, 5000 per month, 50000 per year"
