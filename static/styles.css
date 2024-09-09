@@ -7,7 +7,7 @@
         width: 100%;
         height: 100%;
         overflow-y: hidden;
-        background-color: #202020;
+        background-color: #121212;
     }
 
     .s1d {
@@ -51,7 +51,7 @@
         padding-top: 1%;
         position: relative;
         float: left;
-        background-color: #202020;
+        background-color: #121212;
         padding-right: 2vw;
 
         
@@ -60,7 +60,7 @@
     .sidebar {
         width: 28%; 
         height: 100vh;
-        background-color: #333;
+        background-color: #1e1e1e;
         color: white;
         float: right;
         box-sizing: border-box;
@@ -73,7 +73,7 @@
         margin:0;
     }
     .sidebarinner{
-        background-color:#202020;
+        background-color:#121212;
         padding-top:2vh;
         border-radius: 5vh;
     }
