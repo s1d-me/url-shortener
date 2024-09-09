@@ -314,14 +314,13 @@
                     <td>{{ url.expiry_time }}</td>
                     <td>
                         <a href="{{ url_for('link_analytics', short_code=url.short_code) }}" class="btn btn-sm">Analytics</a>
-                        <a href="{{ url_for('manage_links') }}" class="btn btn-sm manage">Manage</a>
+                        <a href="{{ url_for('manage_link', code=url.short_code) }}" class="btn btn-sm manage">Manage</a>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
         </div>
-
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
