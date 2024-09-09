@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for, render_template, jsonify, session
+from flask import Flask, request, redirect, url_for, render_template, jsonify, session, flash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -671,18 +671,21 @@ def report_malicious_link(code):
 
     return render_template('report_link.html', code=code, original_url=url['original_url'])
 
-@app.route('/manage_links', methods=['GET', 'POST'])
+@app.route('/manage/<code>', methods=['GET', 'POST'])
 @login_required
-def manage_links():
+def manage_link(code):
     user_id = current_user.id
     conn = get_db_connection(DATABASE)
 
     if request.method == 'POST':
         action = request.form['action']
-        short_code = request.form['short_code']
 
         if action == 'delete':
-            conn.execute('DELETE FROM url_mapping WHERE short_code = ? AND user_id = ?', (short_code, user_id))
+            conn.execute('DELETE FROM url_mapping WHERE short_code = ? AND user_id = ?', (code, user_id))
+            conn.commit()
+            conn.close()
+            return redirect(url_for('dashboard'))
+
         elif action == 'modify':
             original_url = request.form['url']
             expiry_time = request.form.get('expiry_time')
@@ -694,14 +697,16 @@ def manage_links():
                 password_hash = None
 
             conn.execute('UPDATE url_mapping SET original_url = ?, expiry_time = ?, password = ? WHERE short_code = ? AND user_id = ?',
-                         (original_url, expiry_time, password_hash, short_code, user_id))
+                         (original_url, expiry_time, password_hash, code, user_id))
+            conn.commit()
 
-        conn.commit()
-
-    urls = conn.execute('SELECT * FROM url_mapping WHERE user_id = ?', (user_id,)).fetchall()
+    link = conn.execute('SELECT * FROM url_mapping WHERE short_code = ? AND user_id = ?', (code, user_id)).fetchone()
     conn.close()
 
-    return render_template('manage_links.html', urls=urls)
+    if not link:
+        return 'Link not found', 404
+
+    return render_template('manage_link.html', link=link)
 
 @app.route('/admin/manage_links', methods=['GET', 'POST'])
 @login_required
@@ -785,5 +790,5 @@ def use_recovery_code():
 
 if __name__ == '__main__':
     init_db()
-    port = int(os.getenv('PORT'))
-    app.run(debug=True, host='0.0.0.0', port=port)
+    # port = int(os.getenv('PORT'))
+    app.run(debug=True, host='0.0.0.0', port=5000)
