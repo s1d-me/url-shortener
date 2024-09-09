@@ -194,6 +194,7 @@ def require_api_token(f):
 
 def get_rate_limit(tier):
     limits = {
+        'anon': app.config['ANON_RATE_LIMIT'],
         'free': app.config['FREE_TIER_RATE_LIMIT'],
         'premium': app.config['PREMIUM_TIER_RATE_LIMIT'],
         'enterprise': app.config['ENTERPRISE_TIER_RATE_LIMIT'],
@@ -205,7 +206,7 @@ def apply_rate_limit(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         user_id = current_user.id if current_user.is_authenticated else None
-        tier = get_user_tier(user_id) if user_id else 'free'
+        tier = get_user_tier(user_id) if user_id else 'anon'
         rate_limit = get_rate_limit(tier)
 
         print(f"Applying rate limit: {rate_limit}")
