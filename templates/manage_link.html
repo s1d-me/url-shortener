@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Link</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+Mono+TC&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #121212;
+            color: #1fd655;
+            font-family: "LXGW WenKai Mono TC", monospace;
+            margin: 2rem;
+        }
+
+        .title {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: 0.06vw;
+        }
+
+        .navbar {
+            background-color: #121212;
+            border-bottom: 1px solid #333;
+        }
+
+        .navbar-brand {
+            color: #1fd655;
+            font-size: 1.5rem;
+        }
+
+        .navbar-nav .nav-link {
+            color: #1fd655;
+            margin-right: 1rem;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #fff;
+        }
+
+        .container {
+            max-width: 80vw;
+            margin: auto;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+            background-color: #121212;
+        }
+
+        .table th, .table td {
+            padding: 0.5rem;
+            word-wrap: break-all; /* Ensure text wrapping */
+        }
+        .table th {
+            text-align: center;
+            color: #1fd655;
+        }
+
+        .table td {
+            margin-top: 10px;
+            color: #fff;
+            max-width: 48ch; /* Limit the width to 64 characters */
+            word-break: break-all;
+            overflow-wrap: break-word; /* Ensure text wrapping */
+            text-align: center;
+        }
+        .btn {
+            background-color: transparent;
+            color: #fff;
+            border: solid #1fd655 0.5vh;
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            margin: 0.5rem;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        table, th, td {
+            border: none!important; /* Remove borders */
+        }
+
+        tr { /* White text for table headers and data */
+            margin: 10px;
+            border-radius: 0.75em;
+        }
+
+        .btn:hover {
+            background-color: #1fd655;
+            font-weight: 600;
+            color:black;
+        }
+
+        .total {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80vw;
+        }
+
+        .username {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .inner-username {
+            color: #d4ff3c;
+        }
+
+        .header-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .header-grid .title {
+            text-align: left;
+        }
+
+        .header-grid .username {
+            text-align: right;
+        }
+
+        .section-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            align-items: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .section-grid h2 {
+            margin: 0;
+        }
+
+        .section-grid .btn {
+            margin: auto;
+            position: relative;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        hr {
+            margin-bottom: 2rem;
+            color: #fff;
+            background-color: #2f2f2f;
+            height: 0.06vw;
+            width: 90vw;
+        }
+
+        .manage {
+            background-color: #1fd655;
+            color: black;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        .manage:hover {
+            box-shadow: inset 0 0 10px #2f2f2f;
+        }
+
+        .logout {
+            border-color: red;
+        }
+
+        .logout:hover {
+            background-color: red;
+        }
+
+        .tfa {
+            border-color: #b148d2;
+        }
+
+        .tfa:hover {
+            background-color: #b148d2;
+        }
+
+        thead {
+            border-radius: 0.75em!important;
+            background-color: #1e1e1e;
+        }
+
+        .modal-content{
+            background-color: #121212!important;
+        }
+        .table-container{
+            width: 90vw;
+            margin: auto;
+        }
+
+        .apitok{
+            border-color: #37caf5;
+        }
+        .apitok:hover{
+            background-color: #37caf5;
+        }
+        .apiex{
+            border-color:#fdc500;
+        }
+        .apiex:hover{
+            background-color:#fdc500;
+        }
+
+        @media (max-width: 768px) {
+            .section-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+
+            .table th:nth-child(3), .table td:nth-child(3),
+            .table th:nth-child(4), .table td:nth-child(4) {
+                display: none;
+            }
+
+            .header-grid {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .header-grid .title, .header-grid .username {
+                margin-bottom: 1rem;
+            }
+        }
+
+        .btn-danger{
+            border-color: #d9534f;
+        }
+        .btn-danger:hover{
+            background-color: #d9534f;
+        }
+        .btn-primary{
+            border-color: #0275d8;
+        }
+        .btn-primary:hover{
+            background-color: #0275d8;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand" href="{{ url_for('home') }}">s1d</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('index') }}">Shorten</a>
+                </li>
+
+                {% if current_user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                </li>
+                {%endif%}
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('api') }}">API Docs</a>
+                </li>
+
+                {% if current_user.tier == 'admin' %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('assign_tier') }}">Assign Tier</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_manage_links') }}">Manage Links</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="header-grid">
+            <h1 class="title">Manage Link</h1>
+            <p class="username">Welcome, <span class="inner-username">{{ current_user.username }}</span>!</p>
+        </div>
+
+        <p><strong>Short Code:</strong> {{ link.short_code }}</p>
+        <p><strong>Original URL:</strong> <a href="{{ link.original_url }}" target="_blank">{{ link.original_url }}</a></p>
+        <p><strong>Expiry Time:</strong> {{ link.expiry_time }}</p>
+
+        <form method="POST" action="{{ url_for('manage_link', code=link.short_code) }}">
+            <div class="form-group">
+                <label for="url">New Original URL</label>
+                <input type="text" class="form-control" id="url" name="url" value="{{ link.original_url }}" required>
+            </div>
+            <div class="form-group">
+                <label for="expiry_time">New Expiry Time (YYYY-MM-DD HH:MM:SS)</label>
+                <input type="text" class="form-control" id="expiry_time" name="expiry_time" value="{{ link.expiry_time }}" placeholder="Leave empty for no expiry">
+            </div>
+            <div class="form-group">
+                <label for="password">New Password</label>
+                <input type="password" class="form-control" id="password" name="password" placeholder="Leave empty to keep current password">
+            </div>
+            <button type="submit" class="btn btn-primary" name="action" value="modify">Modify Link</button>
+            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModal">Delete Link</button>
+        </form>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="modal" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to delete this link?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn" data-dismiss="modal">Cancel</button>
+                        <form method="POST" action="{{ url_for('manage_link', code=link.short_code) }}">
+                            <input type="hidden" name="action" value="delete">
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <a href="{{ url_for('dashboard') }}" class="btn mt-3">Back to Dashboard</a>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
