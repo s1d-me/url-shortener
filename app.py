@@ -226,6 +226,9 @@ def api():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
