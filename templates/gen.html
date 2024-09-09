@@ -158,6 +158,9 @@
         .navbar-nav .nav-link:hover {
             color: #fff;
         }
+        .exp{
+            margin-bottom: 1em;
+        }
     </style>
 </head>
 <body>
@@ -223,7 +226,7 @@
         <label for="allow_lowercase">Yes</label><br>
 
         <label for="expiry_time">Expiry Time (optional, format: YYYY-MM-DD HH:MM:SS):</label>
-        <input type="text" id="expiry_time" name="expiry_time">
+        <input type="datetime-local" id="expiry_time" name="expiry_time" class="exp">
 
         <label for="password">Password (optional):</label>
         <input type="password" id="password" name="password">
