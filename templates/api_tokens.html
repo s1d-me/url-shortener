@@ -234,6 +234,12 @@
                 margin-bottom: 1rem;
             }
         }
+        .btn-danger{
+            border-color: #d9534f;
+        }
+        .btn-danger:hover{
+            background-color: #d9534f;
+        }
     </style>
 </head>
 <body>
@@ -294,7 +300,7 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="token-table-body">
                     {% if tokens %}
                         {% for token in tokens %}
                             <tr>
@@ -302,8 +308,11 @@
                                 <td>{{ token.link_count }}</td>
                                 <td>{{ token.click_count }}</td>
                                 <td>
-                                    <a href="{{ url_for('reset_api_token', token_id=token.id) }}" class="btn btn-sm">Reset API Token</a>
-                                    <a href="{{ url_for('api_analytics', token_id=token.id) }}" class="btn btn-sm">Analytics</a>
+                                    <form id="delete-token-form-{{ token.token }}" action="{{ url_for('delete_api_token') }}" method="post">
+                                        <input type="hidden" name="token" value="{{ token.token }}">
+                                        <button type="submit" class="btn btn-danger btn-sm delete-token">Delete</button>
+                                    </form>
+                                    <a href="{{ url_for('api_analytics') }}" class="btn btn-sm">Analytics</a>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -314,14 +323,49 @@
                     {% endif %}
                 </tbody>
             </table>
-            <form id="generate-token-form" action="{{ url_for('reset_api_token') }}" method="post">
+            <form id="generate-token-form" action="{{ url_for('generate_api_token') }}" method="post">
                 <button type="submit" class="btn btn-lg apitok">Generate New API Token</button>
             </form>
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.querySelectorAll('.delete-token').forEach(function(button) {
+            button.addEventListener('click', function(event) {
+                event.preventDefault(); // Prevent the default form submission
+
+                const form = event.target.closest('form');
+                const token = form.querySelector('input[name="token"]').value;
+
+                fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token: token })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        // Remove the token row from the table
+                        const tableBody = document.getElementById('token-table-body');
+                        const rows = tableBody.getElementsByTagName('tr');
+                        for (let i = 0; i < rows.length; i++) {
+                            const cells = rows[i].getElementsByTagName('td');
+                            if (cells[0].innerText === token) {
+                                tableBody.removeChild(rows[i]);
+                                break;
+                            }
+                        }
+                    } else {
+                        alert(data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            });
+        });
+    </script>
 </body>
 </html>
