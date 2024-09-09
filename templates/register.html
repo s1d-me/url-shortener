@@ -1,20 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Register</title>
+  <meta charset="UTF-8">
+  <title>Register</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+Mono+TC&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #121212;
+      color: #1fd655;
+      font-family: "LXGW WenKai Mono TC", monospace;
+      margin: 2rem;
+    }
+
+    .title {
+      text-align: center;
+      margin-bottom: 1rem;
+      font-size: 2.5rem;
+    }
+
+    .register-form {
+      max-width: 40vw;
+      margin: auto;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+      border: 1px solid #333;
+      margin-bottom: 1rem;
+    }
+
+    .register-button {
+      background-color: #121212;
+      color: #fff;
+      border: solid #1fd655 0.5vh;
+      padding: 0.75rem 1rem;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      margin: auto;
+    }
+
+    .login-link {
+      display: block;
+      text-align: center;
+      margin-top: 1rem;
+      color: #999;
+    }
+
+    .total {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 30vw;
+    }
+  </style>
 </head>
 <body>
-    <h1>Register</h1>
-    <form method="POST">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required><br>
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required><br>
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required><br>
-        <button type="submit">Register</button>
+  <div class="total">
+    <h1 class="title">Register</h1>
+    <form method="POST" class="register-form">
+      <label for="username">Username:</label>
+      <input type="text" id="username" name="username" required class="input-field"><br>
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required class="input-field"><br>
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" required class="input-field"><br>
+      <button type="submit" class="register-button">Register</button>
     </form>
     <a href="{{ url_for('login') }}">Already have an account? Login</a>
+  </div>
 </body>
 </html>
