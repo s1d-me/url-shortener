@@ -200,7 +200,7 @@ def get_rate_limit(tier):
         'enterprise': app.config['ENTERPRISE_TIER_RATE_LIMIT'],
         'admin': app.config['ADMIN_TIER_RATE_LIMIT']
     }
-    return limits.get(tier, app.config['DEFAULT_RATE_LIMIT'])
+    return limits.get(tier, app.config['ANON_RATE_LIMIT'])
 
 def apply_rate_limit(f):
     @wraps(f)
@@ -430,7 +430,7 @@ def redirect_to_url(code):
 @app.route('/check_password', methods=['POST'])
 def check_password():
     code = request.form['code']
-    password = request.form['password']
+    password = str(request.form['password'])
 
     conn = get_db_connection(DATABASE)
     url = conn.execute('SELECT original_url, password FROM url_mapping WHERE short_code = ?', (code,)).fetchone()

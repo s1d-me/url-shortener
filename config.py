@@ -20,7 +20,7 @@ FREE_TIER_RATE_LIMIT = "1 per 2 seconds, 20 per hour, 50 per day, 1000 per month
 PREMIUM_TIER_RATE_LIMIT = "2 per second, 50 per hour, 100 per day, 2000 per month, 20000 per year"
 ENTERPRISE_TIER_RATE_LIMIT = "5 per second, 100 per hour, 200 per day, 5000 per month, 50000 per year"
 ADMIN_TIER_RATE_LIMIT = "10 per second, 200 per hour, 500 per day, 10000 per month, 100000 per year"
-DEFAULT_RATE_LIMIT = "1 per 5 seconds, 5 per day"
+
 
 # config.py
 
