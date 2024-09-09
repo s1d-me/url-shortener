@@ -54,22 +54,22 @@
         }
 
         .table th, .table td {
-    padding: 0.5rem;
-    word-wrap: break-all; /* Ensure text wrapping */
-}
+            padding: 0.5rem;
+            word-wrap: break-all; /* Ensure text wrapping */
+        }
         .table th {
             text-align: center;
             color: #1fd655;
         }
 
         .table td {
-    margin-top: 10px;
-    color: #fff;
-    max-width: 48ch; /* Limit the width to 64 characters */
-    word-break: break-all;
-    overflow-wrap: break-word; /* Ensure text wrapping */
-    text-align: center;
-}
+            margin-top: 10px;
+            color: #fff;
+            max-width: 48ch; /* Limit the width to 64 characters */
+            word-break: break-all;
+            overflow-wrap: break-word; /* Ensure text wrapping */
+            text-align: center;
+        }
         .btn {
             background-color: transparent;
             color: #fff;
@@ -239,7 +239,6 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('index') }}">Shorten</a>
                 </li>
-                
 
                 {% if current_user.is_authenticated %}
                 <li class="nav-item">
@@ -250,7 +249,6 @@
                     <a class="nav-link" href="{{ url_for('login') }}">Login</a>
                 </li>
                 {%endif%}
-
 
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('api') }}">API Docs</a>
@@ -284,9 +282,17 @@
             <div>
                 <a href="{{ url_for('api') }}" class="btn apiex">API Examples</a>
             </div>
+            {% if two_factor_enabled %}
+            <div>
+                <form action="{{ url_for('disable_2fa') }}" method="POST">
+                    <button type="submit" class="btn tfa">Disable 2FA</button>
+                </form>
+            </div>
+            {% else %}
             <div>
                 <a href="{{ url_for('enable_2fa') }}" class="btn tfa">Enable 2FA</a>
             </div>
+            {% endif %}
             <div>
                 <a href="{{ url_for('logout') }}" class="btn logout">Log Out</a>
             </div>

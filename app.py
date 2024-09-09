@@ -309,9 +309,12 @@ def dashboard():
     user_id = current_user.id
     conn = get_db_connection(DATABASE)
     urls = conn.execute('SELECT * FROM url_mapping WHERE user_id = ?', (user_id,)).fetchall()
+    user = conn.execute('SELECT two_factor_secret FROM users WHERE id = ?', (user_id,)).fetchone()
     conn.close()
 
-    return render_template('dashboard.html', urls=urls)
+    two_factor_enabled = bool(user['two_factor_secret'])
+
+    return render_template('dashboard.html', urls=urls, two_factor_enabled=two_factor_enabled)
 
 @app.route('/logout')
 @login_required
@@ -623,6 +626,16 @@ def enable_2fa():
     conn.close()
 
     return render_template('enable_2fa.html', secret=secret, provisioning_uri=provisioning_uri, recovery_codes=recovery_codes)
+
+@app.route('/disable_2fa', methods=['POST'])
+@login_required
+def disable_2fa():
+    user_id = current_user.id
+    conn = get_db_connection(DATABASE)
+    conn.execute('UPDATE users SET two_factor_secret = NULL WHERE id = ?', (user_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('dashboard'))
 
 @app.route('/admin/assign_tier', methods=['GET', 'POST'])
 @login_required
