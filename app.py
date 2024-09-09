@@ -49,6 +49,12 @@ class User(UserMixin):
         self.two_factor_secret = two_factor_secret
         self.salt = salt
 
+    def get_token_count(self):
+        conn = get_db_connection(DATABASE)
+        count = conn.execute('SELECT COUNT(*) FROM api_tokens WHERE user_id = ?', (self.id,)).fetchone()[0]
+        conn.close()
+        return count
+
 @login_manager.user_loader
 def load_user(user_id):
     conn = get_db_connection(DATABASE)
@@ -435,6 +441,26 @@ def check_password():
     conn.close()
     return 'Incorrect password', 403
 
+@app.route('/generate_api_token', methods=['POST'])
+@login_required
+def generate_api_token():
+    user_id = current_user.id
+    tier = current_user.tier
+    token_limit = app.config.get(f'{tier.upper()}_TIER_API_TOKEN_LIMIT', 1)
+
+    if current_user.get_token_count() >= token_limit:
+        return 'API token limit reached', 403
+
+    new_token = uuid.uuid4().hex
+    conn = get_db_connection(DATABASE)
+    conn.execute('INSERT INTO api_tokens (token, user_id, username) VALUES (?, ?, ?)', (new_token, user_id, current_user.username))
+    conn.execute('UPDATE users SET api_token = ? WHERE id = ?', (new_token, user_id))
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for('api_tokens'))
+
+
 @app.route('/api/shorten', methods=['POST'])
 @require_api_token
 @apply_rate_limit
@@ -519,33 +545,6 @@ def api_analytics():
     conn.close()
     return jsonify(analytics)
 
-@app.route('/reset_api_token', methods=['POST'])
-@login_required
-def reset_api_token():
-    user_id = current_user.id
-    conn = get_db_connection(DATABASE)
-
-    # Retrieve the current token and its counts
-    existing_token = conn.execute('SELECT token, link_count, click_count FROM api_tokens WHERE user_id = ?', (user_id,)).fetchone()
-
-    if existing_token:
-        # Generate a new token
-        new_token = uuid.uuid4().hex
-
-        # Update the token but keep the counts
-        conn.execute('UPDATE api_tokens SET token = ? WHERE user_id = ?', (new_token, user_id))
-        conn.execute('UPDATE users SET api_token = ? WHERE id = ?', (new_token, user_id))
-    else:
-        # If no token exists, create a new one
-        new_token = uuid.uuid4().hex
-        conn.execute('INSERT INTO api_tokens (token, user_id, username) VALUES (?, ?, ?)', (new_token, user_id, current_user.username))
-        conn.execute('UPDATE users SET api_token = ? WHERE id = ?', (new_token, user_id))
-
-    conn.commit()
-    conn.close()
-
-    return {'token': new_token}, 201
-
 @app.route('/api_tokens')
 @login_required
 def api_tokens():
@@ -554,6 +553,29 @@ def api_tokens():
     tokens = conn.execute('SELECT * FROM api_tokens WHERE user_id = ?', (user_id,)).fetchall()
     conn.close()
     return render_template('api_tokens.html', tokens=tokens)
+
+@app.route('/delete_api_token', methods=['POST'])
+@login_required
+def delete_api_token():
+    data = request.get_json()
+    token = data.get('token')
+    if not token:
+        return jsonify({'error': 'API token is missing'}), 400
+
+    conn = get_db_connection(DATABASE)
+    existing_token = conn.execute('SELECT token, user_id FROM api_tokens WHERE token = ?', (token,)).fetchone()
+
+    if not existing_token:
+        conn.close()
+        return jsonify({'error': 'Invalid API token'}), 403
+
+    user_id = existing_token['user_id']
+
+    conn.execute('DELETE FROM api_tokens WHERE token = ? AND user_id = ?', (token, user_id))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'message': 'API token deleted successfully'}), 200
 
 @app.route('/link_analytics/<short_code>')
 @login_required

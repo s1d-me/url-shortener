@@ -20,3 +20,10 @@ PREMIUM_TIER_RATE_LIMIT = "2 per second, 50 per hour, 100 per day, 2000 per mont
 ENTERPRISE_TIER_RATE_LIMIT = "5 per second, 100 per hour, 200 per day, 5000 per month, 50000 per year"
 ADMIN_TIER_RATE_LIMIT = "10 per second, 200 per hour, 500 per day, 10000 per month, 100000 per year"
 DEFAULT_RATE_LIMIT = "1 per 5 seconds, 5 per day"
+
+# config.py
+
+FREE_TIER_API_TOKEN_LIMIT = 10
+PREMIUM_TIER_API_TOKEN_LIMIT = 5
+ENTERPRISE_TIER_API_TOKEN_LIMIT = 10
+ADMIN_TIER_API_TOKEN_LIMIT = 20
