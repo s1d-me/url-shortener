@@ -8,11 +8,10 @@
 # DEFAULT_RATE_LIMIT = "2 per day"
 
 # config.py
-DB_NAME = 'your_database_name'
-DB_USER = 'your_database_user'
-DB_PASSWORD = 'your_database_password'
-DB_HOST = 'your_database_host'
-DB_PORT = 'your_database_port'
+DB_USER = 'postgres'
+DB_PASSWORD = 'password'
+DB_HOST = 'localhost'
+DB_PORT = '5432'
 
 # Rate limits for different tiers
 ANON_RATE_LIMIT = "1 per 5 seconds, 5 per day"
