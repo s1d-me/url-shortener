@@ -14,6 +14,10 @@ import pyotp
 import uuid
 import hmac
 from cryptography.fernet import Fernet
+import pandas as pd
+import matplotlib.pyplot as plt
+from geopy.geocoders import Nominatim
+import numpy as np
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Secret key for session management
@@ -109,6 +113,18 @@ def init_db():
                 user_id INTEGER,
                 username TEXT,
                 FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+        ''')
+
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS click_data (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                short_code TEXT,
+                referrer TEXT,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                geolocation TEXT,
+                device_type TEXT,
+                FOREIGN KEY(short_code) REFERENCES url_mapping(short_code)
             )
         ''')
 
@@ -215,6 +231,94 @@ def apply_rate_limit(f):
         return limiter.limit(rate_limit)(f)(*args, **kwargs)
     return decorated_function
 
+def get_analytics_data(short_code):
+    conn = get_db_connection(DATABASE)
+    click_data = conn.execute('SELECT * FROM click_data WHERE short_code = ?', (short_code,)).fetchall()
+    conn.close()
+
+    if not click_data:
+        return {
+            'top_referrers': {},
+            'total_clicks': 0,
+            'click_distribution': [],
+            'country_region': {},
+            'city': {},
+            'device_type': {},
+            'hourly': [],
+            'daily': [],
+            'weekly': [],
+            'monthly': [],
+            'peak_times': None
+        }
+
+    df = pd.DataFrame(click_data)
+
+    # Check if 'timestamp' column exists
+    if 'timestamp' not in df.columns:
+        print("Error: 'timestamp' column not found in the DataFrame.")
+        return {
+            'top_referrers': {},
+            'total_clicks': 0,
+            'click_distribution': [],
+            'country_region': {},
+            'city': {},
+            'device_type': {},
+            'hourly': [],
+            'daily': [],
+            'weekly': [],
+            'monthly': [],
+            'peak_times': None
+        }
+
+    df['timestamp'] = pd.to_datetime(df['timestamp'])
+
+    # Top Referrers
+    top_referrers = df['referrer'].value_counts().head(5).to_dict()
+
+    # Total Clicks
+    total_clicks = df.shape[0]
+
+    # Click Distribution
+    click_distribution = df.resample('D', on='timestamp').size().tolist()
+
+    # Country/Region
+    geolocator = Nominatim(user_agent="url_shortener")
+    df['country'] = df['geolocation'].apply(lambda x: geolocator.geocode(x).address.split(',')[-1].strip() if x else None)
+    country_region = df['country'].value_counts().to_dict()
+
+    # City
+    df['city'] = df['geolocation'].apply(lambda x: geolocator.geocode(x).address.split(',')[0].strip() if x else None)
+    city = df['city'].value_counts().to_dict()
+
+    # Device Type
+    device_type = df['device_type'].value_counts().to_dict()
+
+    # Hourly/Daily/Weekly/Monthly
+    hourly = df.resample('H', on='timestamp').size().tolist()
+    daily = df.resample('D', on='timestamp').size().tolist()
+    weekly = df.resample('W', on='timestamp').size().tolist()
+    monthly = df.resample('M', on='timestamp').size().tolist()
+
+    # Peak Times
+    peak_times = df.groupby(df['timestamp'].dt.hour).size().idxmax()
+
+    analytics = {
+        'top_referrers': top_referrers,
+        'total_clicks': total_clicks,
+        'click_distribution': click_distribution,
+        'country_region': country_region,
+        'city': city,
+        'device_type': device_type,
+        'hourly': hourly,
+        'daily': daily,
+        'weekly': weekly,
+        'monthly': monthly,
+        'peak_times': peak_times
+    }
+
+    print("Analytics Data:", analytics)  # Debug print
+    return analytics
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -235,7 +339,7 @@ def api():
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
-    
+
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -417,6 +521,15 @@ def redirect_to_url(code):
         if url['password']:
             return render_template('password.html', code=code)
 
+        # Log the click
+        referrer = request.referrer
+        timestamp = datetime.datetime.now()
+        geolocation = request.headers.get('X-Forwarded-For', request.remote_addr)
+        device_type = request.user_agent.platform
+
+        conn.execute('INSERT INTO click_data (short_code, referrer, timestamp, geolocation, device_type) VALUES (?, ?, ?, ?, ?)',
+                     (code, referrer, timestamp, geolocation, device_type))
+
         conn.execute('UPDATE url_mapping SET click_count = click_count + 1 WHERE short_code = ?', (code,))
         conn.execute('UPDATE api_tokens SET click_count = click_count + 1 WHERE token = (SELECT api_token FROM url_mapping WHERE short_code = ?)', (code,))
         conn.commit()
@@ -463,7 +576,6 @@ def generate_api_token():
     conn.close()
 
     return redirect(url_for('api_tokens'))
-
 
 @app.route('/api/shorten', methods=['POST'])
 @require_api_token
@@ -592,7 +704,9 @@ def link_analytics(short_code):
     if not link:
         return 'Link not found', 404
 
-    return render_template('link_analytics.html', link=link)
+    analytics = get_analytics_data(short_code)
+
+    return render_template('link_analytics.html', link=link, analytics=analytics)
 
 @app.route('/enable_2fa', methods=['GET', 'POST'])
 @login_required
@@ -824,6 +938,42 @@ def use_recovery_code():
     conn.close()
     return 'Invalid recovery code', 400
 
+# Exporting Data
+@app.route('/export_analytics/<short_code>', methods=['GET'])
+@login_required
+def export_analytics(short_code):
+    analytics = get_analytics_data(short_code)
+    user_id = current_user.id
+    conn = get_db_connection(DATABASE)
+    link = conn.execute('SELECT * FROM url_mapping WHERE short_code = ? AND user_id = ?', (short_code, user_id)).fetchone()
+    conn.close()
+
+    if not link:
+        return 'Link not found', 404
+    # Convert analytics data to CSV
+    top_referrers_df = pd.DataFrame(list(analytics['top_referrers'].items()), columns=['referrer', 'count'])
+    click_distribution_df = pd.DataFrame(analytics['click_distribution'], columns=['timestamp', 'count'])
+    country_region_df = pd.DataFrame(list(analytics['country_region'].items()), columns=['country', 'count'])
+    city_df = pd.DataFrame(list(analytics['city'].items()), columns=['city', 'count'])
+    device_type_df = pd.DataFrame(list(analytics['device_type'].items()), columns=['device_type', 'count'])
+    hourly_df = pd.DataFrame(analytics['hourly'], columns=['timestamp', 'count'])
+    daily_df = pd.DataFrame(analytics['daily'], columns=['timestamp', 'count'])
+    weekly_df = pd.DataFrame(analytics['weekly'], columns=['timestamp', 'count'])
+    monthly_df = pd.DataFrame(analytics['monthly'], columns=['timestamp', 'count'])
+
+    with pd.ExcelWriter(f'analytics_{short_code}.xlsx') as writer:
+        top_referrers_df.to_excel(writer, sheet_name='Top Referrers')
+        click_distribution_df.to_excel(writer, sheet_name='Click Distribution')
+        country_region_df.to_excel(writer, sheet_name='Country/Region')
+        city_df.to_excel(writer, sheet_name='City')
+        device_type_df.to_excel(writer, sheet_name='Device Type')
+        hourly_df.to_excel(writer, sheet_name='Hourly')
+        daily_df.to_excel(writer, sheet_name='Daily')
+        weekly_df.to_excel(writer, sheet_name='Weekly')
+        monthly_df.to_excel(writer, sheet_name='Monthly')
+
+    return send_file(f'analytics_{short_code}.xlsx', as_attachment=True)
+
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
+    app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT',5000)))

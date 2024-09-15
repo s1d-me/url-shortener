@@ -2,14 +2,201 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Link Analytics</title>
+    <style>
+
+    </style>
 </head>
 <body>
-    <h1>Link Analytics</h1>
-    <p>Short Code: {{ link.short_code }}</p>
-    <p>Original URL: <a href="{{ link.original_url }}">{{ link.original_url }}</a></p>
-    <p>Click Count: {{ link.click_count }}</p>
-    <p>Expiry Time: {{ link.expiry_time }}</p>
-    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+    <div class="container">
+        <h1>Link Analytics for {{ link.short_code }}</h1>
+
+        <h2>Top Referrers</h2>
+        <ul>
+            {% if analytics.top_referrers %}
+                {% for referrer, count in analytics.top_referrers.items() %}
+                    <li>{{ referrer }}: {{ count }}</li>
+                {% endfor %}
+            {% else %}
+                <li>No data available</li>
+            {% endif %}
+        </ul>
+
+        <h2>Total Clicks: {{ analytics.total_clicks }}</h2>
+
+        <h2>Click Distribution</h2>
+        <canvas id="clickDistributionChart" width="400" height="200"></canvas>
+
+        <h2>Country/Region</h2>
+        <ul>
+            {% if analytics.country_region %}
+                {% for country, count in analytics.country_region.items() %}
+                    <li>{{ country }}: {{ count }}</li>
+                {% endfor %}
+            {% else %}
+                <li>No data available</li>
+            {% endif %}
+        </ul>
+
+        <h2>City</h2>
+        <ul>
+            {% if analytics.city %}
+                {% for city, count in analytics.city.items() %}
+                    <li>{{ city }}: {{ count }}</li>
+                {% endfor %}
+            {% else %}
+                <li>No data available</li>
+            {% endif %}
+        </ul>
+
+        <h2>Device Type</h2>
+        <ul>
+            {% if analytics.device_type %}
+                {% for device, count in analytics.device_type.items() %}
+                    <li>{{ device }}: {{ count }}</li>
+                {% endfor %}
+            {% else %}
+                <li>No data available</li>
+            {% endif %}
+        </ul>
+
+        <h2>Hourly Clicks</h2>
+        <canvas id="hourlyClicksChart" width="400" height="200"></canvas>
+
+        <h2>Daily Clicks</h2>
+        <canvas id="dailyClicksChart" width="400" height="200"></canvas>
+
+        <h2>Weekly Clicks</h2>
+        <canvas id="weeklyClicksChart" width="400" height="200"></canvas>
+
+        <h2>Monthly Clicks</h2>
+        <canvas id="monthlyClicksChart" width="400" height="200"></canvas>
+
+        <h2>Peak Times</h2>
+        <p>Peak hour: {{ analytics.peak_times }}</p>
+
+        <a href="{{ url_for('export_analytics', short_code=link.short_code) }}" class="btn">Export Analytics</a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        console.log("Analytics Data:", {{ analytics | tojson }});  // Debug log
+
+        // Click Distribution Chart
+        const clickDistributionCtx = document.getElementById('clickDistributionChart').getContext('2d');
+        const clickDistributionChart = new Chart(clickDistributionCtx, {
+            type: 'line',
+            data: {
+                labels: {{ analytics.click_distribution | tojson }},
+                datasets: [{
+                    label: 'Clicks',
+                    data: {{ analytics.click_distribution | tojson }},
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Hourly Clicks Chart
+        const hourlyClicksCtx = document.getElementById('hourlyClicksChart').getContext('2d');
+        const hourlyClicksChart = new Chart(hourlyClicksCtx, {
+            type: 'line',
+            data: {
+                labels: {{ analytics.hourly | tojson }},
+                datasets: [{
+                    label: 'Clicks',
+                    data: {{ analytics.hourly | tojson }},
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Daily Clicks Chart
+        const dailyClicksCtx = document.getElementById('dailyClicksChart').getContext('2d');
+        const dailyClicksChart = new Chart(dailyClicksCtx, {
+            type: 'line',
+            data: {
+                labels: {{ analytics.daily | tojson }},
+                datasets: [{
+                    label: 'Clicks',
+                    data: {{ analytics.daily | tojson }},
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Weekly Clicks Chart
+        const weeklyClicksCtx = document.getElementById('weeklyClicksChart').getContext('2d');
+        const weeklyClicksChart = new Chart(weeklyClicksCtx, {
+            type: 'line',
+            data: {
+                labels: {{ analytics.weekly | tojson }},
+                datasets: [{
+                    label: 'Clicks',
+                    data: {{ analytics.weekly | tojson }},
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Monthly Clicks Chart
+        const monthlyClicksCtx = document.getElementById('monthlyClicksChart').getContext('2d');
+        const monthlyClicksChart = new Chart(monthlyClicksCtx, {
+            type: 'line',
+            data: {
+                labels: {{ analytics.monthly | tojson }},
+                datasets: [{
+                    label: 'Clicks',
+                    data: {{ analytics.monthly | tojson }},
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>
