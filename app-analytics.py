@@ -18,6 +18,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from geopy.geocoders import Nominatim
 import numpy as np
+import pandas as pd
+import requests
+
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Secret key for session management
@@ -153,6 +156,13 @@ def init_db():
             conn.commit()
         conn.close()
 
+def get_client_ip():
+    
+    headers_list = request.headers.getlist("X-Forwarded-For")
+    if headers_list:
+        return headers_list[0].split(',')[0].strip()
+    return request.remote_addr
+
 def is_valid_url(url):
     try:
         result = urlparse(url)
@@ -253,6 +263,11 @@ def get_analytics_data(short_code):
 
     df = pd.DataFrame(click_data)
 
+    # Rename columns to something sensible
+    df.columns = ['id', 'short_code', 'referrer', 'timestamp', 'ip_address', 'device_type']
+
+    print(df)
+
     # Check if 'timestamp' column exists
     if 'timestamp' not in df.columns:
         print("Error: 'timestamp' column not found in the DataFrame.")
@@ -281,23 +296,39 @@ def get_analytics_data(short_code):
     # Click Distribution
     click_distribution = df.resample('D', on='timestamp').size().tolist()
 
-    # Country/Region
-    geolocator = Nominatim(user_agent="url_shortener")
-    df['country'] = df['geolocation'].apply(lambda x: geolocator.geocode(x).address.split(',')[-1].strip() if x else None)
-    country_region = df['country'].value_counts().to_dict()
+    # Geolocation Processing
+    def get_country(ip_address):
+        try:
+            response = requests.get(f"https://ipapi.co/{ip_address}/country_name/")
+            if response.status_code == 200:
+                return response.text.strip()
+        except requests.RequestException as e:
+            print(f"RequestException: {e}")
+        return None
 
-    # City
-    df['city'] = df['geolocation'].apply(lambda x: geolocator.geocode(x).address.split(',')[0].strip() if x else None)
+    def get_city(ip_address):
+        try:
+            response = requests.get(f"https://ipapi.co/{ip_address}/city/")
+            if response.status_code == 200:
+                return response.text.strip()
+        except requests.RequestException as e:
+            print(f"RequestException: {e}")
+        return None
+
+    df['country'] = df['ip_address'].apply(get_country)
+    df['city'] = df['ip_address'].apply(get_city)
+
+    country_region = df['country'].value_counts().to_dict()
     city = df['city'].value_counts().to_dict()
 
     # Device Type
     device_type = df['device_type'].value_counts().to_dict()
 
     # Hourly/Daily/Weekly/Monthly
-    hourly = df.resample('H', on='timestamp').size().tolist()
+    hourly = df.resample('h', on='timestamp').size().tolist()
     daily = df.resample('D', on='timestamp').size().tolist()
     weekly = df.resample('W', on='timestamp').size().tolist()
-    monthly = df.resample('M', on='timestamp').size().tolist()
+    monthly = df.resample('ME', on='timestamp').size().tolist()
 
     # Peak Times
     peak_times = df.groupby(df['timestamp'].dt.hour).size().idxmax()
@@ -456,7 +487,7 @@ def shorten_internal():
     if is_blocked_domain(original_url):
         return 'Blocked domain', 400
 
-    ip_address = request.remote_addr
+    ip_address = get_client_ip()
 
     characters = ''
     if allow_numbers:
@@ -524,7 +555,7 @@ def redirect_to_url(code):
         # Log the click
         referrer = request.referrer
         timestamp = datetime.datetime.now()
-        geolocation = request.headers.get('X-Forwarded-For', request.remote_addr)
+        geolocation = request.headers.get('X-Forwarded-For', get_client_ip())
         device_type = request.user_agent.platform
 
         conn.execute('INSERT INTO click_data (short_code, referrer, timestamp, geolocation, device_type) VALUES (?, ?, ?, ?, ?)',
@@ -594,7 +625,7 @@ def api_shorten_internal():
 
     conn = get_db_connection(DATABASE)
 
-    ip_address = request.remote_addr
+    ip_address = get_client_ip()
     token = request.headers.get('Authorization')
 
     user_id_row = conn.execute('SELECT user_id FROM api_tokens WHERE token = ?', (token,)).fetchone()
