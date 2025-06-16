@@ -3,80 +3,1552 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <title>s1d</title>
-
-</head>
-<body>
-    <a href="#"><span class="s1d">s1d</span></a>
-<div class="container">
-    <div class="box box1" onclick="alert('Div 1 clicked')">
-        about
-    </div>
-    <div class="box box2" onclick="alert('Div 2 clicked')">
-        panel
-    </div>
-    <div class="box box3" >
-        <h1><b><i>empowering</i></b> the <u>internet</u></h1>
-        <p>one link at a time</p>
-        <a href="/gen" class="yours">get yours</a>
-        
-    </div>
-    <div class="box box4" onclick="alert('Div 4 clicked')">
-        contact
-    </div>
-</div>
-<div class="sidebar">
-    <div class="sidebarinner">
-    <p>s1d is essential just a link shortener, on steroids.<br>does track user analytics on cookie approval. tos.<br>we provide APIs etc for business purposes too, contact us.</p>
-
-<div class="clampy" style="line-height:0px;">
-    <p>this project is powered by <a><span>Sidhant Hyperspace</span></a></p>
-    <p>Truly Open Source❤️pls donate uwu</p>
-    <p>for donating domains <span>join</span></p>
-</div>
-userful links:
-<ul>
-        <li><a href="#">Link 1</a></li>
-</ul>
-</div>
-<div class="sidebarinner">
-    <input type="radio" id="radio-orange" name="color" />
-    <label for="radio-orange">
-        <div class="radio-btn"></div>
-    </label>
-
-    <input type="radio" id="radio-yellow" name="color" />
-    <label for="radio-yellow">
-        <div class="radio-btn"></div>
-    </label>
-
-    <input type="radio" id="radio-blue" name="color" />
-    <label for="radio-blue">
-        <div class="radio-btn"></div>
-    </label>
-
-    <input type="radio" id="radio-green" name="color" />
-    <label for="radio-green">
-        <div class="radio-btn"></div>
-    </label>
-<p>i thought it would be funny to have more information about you here</p>
-
-<p id="useragent"></p>
-<p id="ipv4"><strong></strong></p>
-<span id="ipv6"></span>
-<p>
-referrer: <span id="referrer"></span>
-    <span style="display:none;" id="accept"></span>
-    screenres: <span id="screen-resolution"></span>
-    <span id="language"></span>
-    number of plugins:<span id="plugins"></span>
+    <title>s1d - Empowering the Internet</title>
     
-    time zone: <span id="time-zone"></span>
-    color depth: <span id="color-depth"></span>
-    <span id="os"></span></p>    
-</div>
-</div>
+    <!-- Optimized Font Loading: Added &display=swap -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;1,400&family=Comic+Neue:wght@700&family=LXGW+WenKai+Mono+TC:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- 
+      OPTIMIZATION: 
+      Replaced the Tailwind JIT CDN and inline <style> tag with a single, pre-generated CSS block.
+      This is significantly faster, more reliable, and avoids the "unstyled content" problem.
+    -->
+    <style>
+        /* Pre-generated Tailwind CSS and Custom Styles */
+        :root {
+          --gradient-angle: 0deg;
+        }
+        *,:after,:before {
+          box-sizing: border-box;
+          border: 0 solid #e5e7eb
+        }
+        :after,:before {
+          --tw-content: ""
+        }
+        html {
+          line-height: 1.5;
+          -webkit-text-size-adjust: 100%;
+          -moz-tab-size: 4;
+          -o-tab-size: 4;
+          tab-size: 4;
+          font-family: ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;
+          font-feature-settings: normal;
+          font-variation-settings: normal;
+          -webkit-tap-highlight-color: transparent
+        }
+        body {
+          margin: 0;
+          line-height: inherit
+        }
+        h1,h2,h3,p {
+          margin: 0
+        }
+        button,svg {
+          display: block
+        }
+        button {
+          font-family: inherit;
+          font-size: 100%;
+          font-weight: inherit;
+          line-height: inherit;
+          color: inherit;
+          margin: 0;
+          padding: 0
+        }
+        button {
+          text-transform: none
+        }
+        button {
+          -webkit-appearance: button;
+          background-color: transparent;
+          background-image: none
+        }
+        a {
+          color: inherit;
+          text-decoration: inherit
+        }
+        ::-webkit-scrollbar {
+          width: 8px
+        }
+        ::-webkit-scrollbar-track {
+          background: rgba(10,10,10,.5)
+        }
+        ::-webkit-scrollbar-thumb {
+          background-color: #3f3f46;
+          border-radius: 4px;
+          border: 2px solid transparent;
+          background-clip: content-box
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background-color: #52525b
+        }
+        @property --gradient-angle {
+          syntax: "<angle>";
+          initial-value: 0deg;
+          inherits: !1
+        }
+        body:before {
+          content: "";
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background-image: radial-gradient(rgba(255,255,255,.04) 1px,transparent 1px);
+          background-size: 16px 16px;
+          pointer-events: none;
+          z-index: -1
+        }
+        aside {
+          overflow-x: hidden
+        }
+        :focus-visible {
+          outline: 2px solid #60a5fa;
+          outline-offset: 2px;
+          border-radius: 2px
+        }
+        .panel:focus-visible,button:focus-visible,a:focus-visible {
+          box-shadow: 0 0 0 2px #18181b,0 0 0 4px #60a5fa
+        }
+        #zoom-in:focus-visible,#zoom-out:focus-visible {
+          box-shadow: 0 0 0 2px #60a5fa
+        }
+        .panel a:focus-visible {
+          box-shadow: inset 0 0 0 2px #60a5fa;
+          outline: 0
+        }
+        .panel.animated-border {
+          border-image-slice: 1;
+          border-image-source: conic-gradient(from var(--gradient-angle),transparent 50%,var(--border-color,#fff),transparent)
+        }
+        .panel:before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: -1;
+          background-size: 200% 200%;
+          animation: glow-rotation 6s linear infinite;
+          opacity: .3
+        }
+        .panel-blue {
+          --border-color: rgba(59,130,246,1)
+        }
+        .panel-blue:before {
+          background-image: radial-gradient(circle,rgba(59,130,246,.6) 0,transparent 50%)
+        }
+        .panel-red {
+          --border-color: rgba(239,68,68,1)
+        }
+        .panel-red:before {
+          background-image: radial-gradient(circle,rgba(239,68,68,.6) 0,transparent 50%)
+        }
+        .panel-lime {
+          --border-color: rgba(132,204,22,1)
+        }
+        .panel-lime:before {
+          background-image: radial-gradient(circle,rgba(132,204,22,.6) 0,transparent 50%)
+        }
+        .panel .panel-hover-content,.panel .panel-main-content {
+          transition: opacity .4s cubic-bezier(.25,1,.5,1),transform .4s cubic-bezier(.25,1,.5,1)
+        }
+        .group:focus-within .panel-hover-content,.group:hover .panel-hover-content,.panel.panel-active .panel-hover-content {
+          opacity: 1;
+          transform: scale(1);
+          pointer-events: auto
+        }
+        .group:focus-within .panel-main-content,.group:hover .panel-main-content,.panel.panel-active .panel-main-content {
+          opacity: 0;
+          transform: scale(.95);
+          pointer-events: none
+        }
+        .passport-card {
+          position: relative;
+          border: 1px solid #3f3f46;
+          background-color: #18181b;
+          box-shadow: 0 10px 25px -5px rgba(0,0,0,.3),0 8px 10px -6px rgba(0,0,0,.4);
+          background-image: radial-gradient(circle at 1px 1px,rgba(63,63,70,.4) 1px,transparent 0),repeating-linear-gradient(to right,rgba(63,63,70,.15) 0,rgba(63,63,70,.15) 1px,transparent 1px,transparent 20px),repeating-linear-gradient(to bottom,rgba(63,63,70,.15) 0,rgba(63,63,70,.15) 1px,transparent 1px,transparent 20px);
+          background-size: 10px 10px,100% 100%,100% 100%;
+          transition: border-color .3s ease;
+          overflow: hidden
+        }
+        .passport-card:hover {
+          border-color: #60a5fa
+        }
+        .passport-card:after,.passport-card:before {
+          content: "";
+          position: absolute;
+          width: 1rem;
+          height: 1rem;
+          border-color: #52525b;
+          transition: border-color .3s ease
+        }
+        .passport-card:before {
+          top: -1px;
+          left: -1px;
+          border-top: 2px solid;
+          border-left: 2px solid;
+          z-index: 10
+        }
+        .passport-card:after {
+          bottom: -1px;
+          right: -1px;
+          border-bottom: 2px solid;
+          border-right: 2px solid;
+          z-index: 10
+        }
+        .passport-card:hover:after,.passport-card:hover:before {
+          border-color: #60a5fa
+        }
+        .passport-photo-box {
+          box-shadow: 0 0 15px rgba(59,130,246,.3),inset 0 0 10px rgba(59,130,246,.2)
+        }
+        .passport-watermark {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%,-50%) rotate(-30deg);
+          font-size: 6rem;
+          font-weight: 700;
+          color: rgba(161,161,170,.05);
+          pointer-events: none;
+          z-index: 0;
+          font-family: Space Mono,monospace
+        }
+        .passport-hologram {
+          position: absolute;
+          bottom: 40px;
+          right: 15px;
+          width: 50px;
+          height: 50px;
+          background-image: linear-gradient(110deg,transparent 25%,rgba(255,255,255,.2),transparent 50%);
+          background-size: 300% 100%;
+          opacity: .7;
+          border-radius: 50%;
+          z-index: 1;
+          animation: hologram-shine 8s linear infinite;
+          -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h10a2 2 0 002-2v-1a2 2 0 012-2h1.945M7.707 4.293l.94-1.591a.5.5 0 01.894 0l.94 1.591M12 21a9 9 0 100-18 9 9 0 000 18z" /></svg>');
+          mask-size: contain;
+          mask-repeat: no-repeat;
+          mask-position: center
+        }
+        .digital-stamp {
+          font-family: Space Mono,monospace;
+          font-weight: 700;
+          color: rgba(59,130,246,.6);
+          border: 2px solid rgba(59,130,246,.6);
+          padding: 2px 8px;
+          border-radius: 4px;
+          transform: rotate(-10deg) translateY(5px);
+          font-size: 12px
+        }
+        .fake-barcode {
+          width: 64px;
+          height: 20px;
+          background: repeating-linear-gradient(to right,#e5e7eb,#e5e7eb 2px,transparent 2px,transparent 4px,#e5e7eb 4px,#e5e7eb 5px,transparent 5px,transparent 8px,#e5e7eb 8px,#e5e7eb 10px,transparent 10px,transparent 11px,#e5e7eb 11px,#e5e7eb 12px,transparent 12px,transparent 15px);
+          opacity: .8
+        }
+        .mrz-zone {
+          font-family: Space Mono,monospace;
+          letter-spacing: 3px;
+          word-break: break-all;
+          line-height: 1.4;
+          position: relative;
+          z-index: 2
+        }
+        .interactive-graph {
+          width: 100%;
+          aspect-ratio: 1.1;
+          background-color: transparent;
+          overflow: hidden;
+          border-radius: 4px;
+          position: relative
+        }
+        .graph-label {
+          font-size: 11px;
+          text-anchor: middle;
+          pointer-events: none;
+          font-family: Space Mono,monospace;
+          fill: #e5e7eb;
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          user-select: none;
+          transition: opacity .3s;
+          text-shadow: 0 0 5px rgba(0,0,0,.9)
+        }
+        .leaf-label {
+          opacity: 0
+        }
+        noscript .no-js-message {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          height: 100%;
+          color: #a1a1aa;
+          font-size: .875rem
+        }
+        .sr-only {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0,0,0,0);
+          white-space: nowrap;
+          border-width: 0
+        }
+        .absolute {
+          position: absolute
+        }
+        .relative {
+          position: relative
+        }
+        .inset-0 {
+          top: 0;
+          right: 0;
+          bottom: 0;
+          left: 0
+        }
+        .top-0 {
+          top: 0
+        }
+        .right-0 {
+          right: 0
+        }
+        .z-10 {
+          z-index: 10
+        }
+        .z-20 {
+          z-index: 20
+        }
+        .col-span-2 {
+          grid-column: span 2/span 2
+        }
+        .h-16 {
+          height: 4rem
+        }
+        .h-20 {
+          height: 5rem
+        }
+        .h-40 {
+          height: 10rem
+        }
+        .h-44 {
+          height: 11rem
+        }
+        .h-56 {
+          height: 14rem
+        }
+        .h-6 {
+          height: 1.5rem
+        }
+        .h-7 {
+          height: 1.75rem
+        }
+        .h-8 {
+          height: 2rem
+        }
+        .h-full {
+          height: 100%
+        }
+        .min-h-screen {
+          min-height: 100vh
+        }
+        .w-16 {
+          width: 4rem
+        }
+        .w-7 {
+          width: 1.75rem
+        }
+        .w-8 {
+          width: 2rem
+        }
+        .w-full {
+          width: 100%
+        }
+        .max-w-5xl {
+          max-width: 64rem
+        }
+        .shrink-0 {
+          flex-shrink: 0
+        }
+        .flex-1 {
+          flex: 1 1 0%
+        }
+        .flex-grow {
+          flex-grow: 1
+        }
+        .scale-105:hover {
+          --tw-scale-x: 1.05;
+          --tw-scale-y: 1.05;
+          transform: translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))
+        }
+        .transform {
+          transform: translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))
+        }
+        .animate-pulse {
+          animation: pulse 2s cubic-bezier(.4,0,.6,1) infinite
+        }
+        .animate-pulse-glow {
+          animation: pulse-glow 4s ease-in-out infinite
+        }
+        .animate-border-rotation {
+          animation: border-rotation 4s linear infinite
+        }
+        .animate-hologram-shine {
+          animation: hologram-shine 8s linear infinite
+        }
+        .cursor-pointer {
+          cursor: pointer
+        }
+        .grid {
+          display: grid
+        }
+        .grid-cols-1 {
+          grid-template-columns: repeat(1,minmax(0,1fr))
+        }
+        .grid-cols-2 {
+          grid-template-columns: repeat(2,minmax(0,1fr))
+        }
+        .grid-rows-2 {
+          grid-template-rows: repeat(2,minmax(0,1fr))
+        }
+        .flex-col {
+          flex-direction: column
+        }
+        .flex-wrap {
+          flex-wrap: wrap
+        }
+        .items-end {
+          align-items: flex-end
+        }
+        .items-center {
+          align-items: center
+        }
+        .justify-center {
+          justify-content: center
+        }
+        .justify-between {
+          justify-content: space-between
+        }
+        .gap-4 {
+          gap: 1rem
+        }
+        .gap-6 {
+          gap: 1.5rem
+        }
+        .gap-x-3 {
+          -moz-column-gap: .75rem;
+          column-gap: .75rem
+        }
+        .gap-x-4 {
+          -moz-column-gap: 1rem;
+          column-gap: 1rem
+        }
+        .gap-x-6 {
+          -moz-column-gap: 1.5rem;
+          column-gap: 1.5rem
+        }
+        .gap-y-1 {
+          row-gap: .25rem
+        }
+        .gap-y-2 {
+          row-gap: .5rem
+        }
+        .gap-y-4 {
+          row-gap: 1rem
+        }
+        .gap-px {
+          gap: 1px
+        }
+        .space-y-2>:not([hidden])~:not([hidden]) {
+          --tw-space-y-reverse: 0;
+          margin-top: calc(.5rem * calc(1 - var(--tw-space-y-reverse)));
+          margin-bottom: calc(.5rem * var(--tw-space-y-reverse))
+        }
+        .space-y-3>:not([hidden])~:not([hidden]) {
+          --tw-space-y-reverse: 0;
+          margin-top: calc(.75rem * calc(1 - var(--tw-space-y-reverse)));
+          margin-bottom: calc(.75rem * var(--tw-space-y-reverse))
+        }
+        .space-y-4>:not([hidden])~:not([hidden]) {
+          --tw-space-y-reverse: 0;
+          margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
+          margin-bottom: calc(1rem * var(--tw-space-y-reverse))
+        }
+        .space-y-8>:not([hidden])~:not([hidden]) {
+          --tw-space-y-reverse: 0;
+          margin-top: calc(2rem * calc(1 - var(--tw-space-y-reverse)));
+          margin-bottom: calc(2rem * var(--tw-space-y-reverse))
+        }
+        .overflow-hidden {
+          overflow: hidden
+        }
+        .rounded-md {
+          border-radius: .375rem
+        }
+        .rounded-lg {
+          border-radius: .5rem
+        }
+        .border {
+          border-width: 1px
+        }
+        .border-2 {
+          border-width: 2px
+        }
+        .border-b {
+          border-bottom-width: 1px
+        }
+        .border-t {
+          border-top-width: 1px
+        }
+        .border-l {
+          border-left-width: 1px
+        }
+        .border-blue-400 {
+          --tw-border-opacity: 1;
+          border-color: rgb(96 165 250/var(--tw-border-opacity))
+        }
+        .border-b-transparent {
+          border-bottom-color: transparent
+        }
+        .border-transparent {
+          border-color: transparent
+        }
+        .border-white {
+          --tw-border-opacity: 1;
+          border-color: rgb(255 255 255/var(--tw-border-opacity))
+        }
+        .border-zinc-700 {
+          --tw-border-opacity: 1;
+          border-color: rgb(63 63 70/var(--tw-border-opacity))
+        }
+        .border-zinc-700\/50 {
+          border-color: rgb(63 63 70/.5)
+        }
+        .border-zinc-800 {
+          --tw-border-opacity: 1;
+          border-color: rgb(39 39 42/var(--tw-border-opacity))
+        }
+        .border-yellow-700 {
+          --tw-border-opacity: 1;
+          border-color: rgb(161 98 7/var(--tw-border-opacity))
+        }
+        .border-lime-500\/50 {
+          border-color: rgb(132 204 22/.5)
+        }
+        .border-red-500\/50 {
+          border-color: rgb(239 68 68/.5)
+        }
+        .border-blue-500\/50 {
+          border-color: rgb(59 130 246/.5)
+        }
+        .bg-black {
+          --tw-bg-opacity: 1;
+          background-color: rgb(0 0 0/var(--tw-bg-opacity))
+        }
+        .bg-gradient-to-br {
+          background-image: linear-gradient(to bottom right,var(--tw-gradient-stops))
+        }
+        .from-zinc-900 {
+          --tw-gradient-from: #18181b;
+          --tw-gradient-to: rgb(24 24 27/0);
+          --tw-gradient-stops: var(--tw-gradient-from),var(--tw-gradient-to)
+        }
+        .via-\[\#18181b\] {
+          --tw-gradient-to: rgb(24 24 27/0);
+          --tw-gradient-stops: var(--tw-gradient-from),#18181b,var(--tw-gradient-to)
+        }
+        .to-\[\#18181b\] {
+          --tw-gradient-to: #18181b
+        }
+        .bg-zinc-700\/80 {
+          background-color: rgb(63 63 70/.8)
+        }
+        .bg-zinc-900\/50 {
+          background-color: rgb(24 24 27/.5)
+        }
+        .bg-zinc-900\/70 {
+          background-color: rgb(24 24 27/.7)
+        }
+        .bg-blue-500\/20 {
+          background-color: rgb(59 130 246/.2)
+        }
+        .bg-yellow-900\/50 {
+          background-color: rgb(113 63 18/.5)
+        }
+        .p-1 {
+          padding: .25rem
+        }
+        .p-2 {
+          padding: .5rem
+        }
+        .p-3 {
+          padding: .75rem
+        }
+        .p-4 {
+          padding: 1rem
+        }
+        .p-6 {
+          padding: 1.5rem
+        }
+        .pb-2 {
+          padding-bottom: .5rem
+        }
+        .pb-4 {
+          padding-bottom: 1rem
+        }
+        .pt-3 {
+          padding-top: .75rem
+        }
+        .text-center {
+          text-align: center
+        }
+        .font-mono {
+          font-family: Space Mono,monospace
+        }
+        .font-comic {
+          font-family: "Comic Neue",cursive
+        }
+        .font-lxgw {
+          font-family: "LXGW WenKai Mono TC",monospace
+        }
+        .text-2xl {
+          font-size: 1.5rem;
+          line-height: 2rem
+        }
+        .text-3xl {
+          font-size: 1.875rem;
+          line-height: 2.25rem
+        }
+        .text-4xl {
+          font-size: 2.25rem;
+          line-height: 2.5rem
+        }
+        .text-5xl {
+          font-size: 3rem;
+          line-height: 1
+        }
+        .text-6xl {
+          font-size: 3.75rem;
+          line-height: 1
+        }
+        .text-8xl {
+          font-size: 6rem;
+          line-height: 1
+        }
+        .text-lg {
+          font-size: 1.125rem;
+          line-height: 1.75rem
+        }
+        .text-sm {
+          font-size: .875rem;
+          line-height: 1.25rem
+        }
+        .text-xl {
+          font-size: 1.25rem;
+          line-height: 1.75rem
+        }
+        .text-xs {
+          font-size: .75rem;
+          line-height: 1rem
+        }
+        .text-\[10px\] {
+          font-size: 10px
+        }
+        .font-bold {
+          font-weight: 700
+        }
+        .font-semibold {
+          font-weight: 600
+        }
+        .uppercase {
+          text-transform: uppercase
+        }
+        .italic {
+          font-style: italic
+        }
+        .leading-none {
+          line-height: 1
+        }
+        .leading-relaxed {
+          line-height: 1.625
+        }
+        .leading-tight {
+          line-height: 1.25
+        }
+        .tracking-wider {
+          letter-spacing: .05em
+        }
+        .tracking-\[0\.2em\] {
+          letter-spacing: .2em
+        }
+        .text-black:hover {
+          --tw-text-opacity: 1;
+          color: rgb(0 0 0/var(--tw-text-opacity))
+        }
+        .text-gray-200 {
+          --tw-text-opacity: 1;
+          color: rgb(229 231 235/var(--tw-text-opacity))
+        }
+        .text-gray-300 {
+          --tw-text-opacity: 1;
+          color: rgb(209 213 219/var(--tw-text-opacity))
+        }
+        .text-gray-400 {
+          --tw-text-opacity: 1;
+          color: rgb(156 163 175/var(--tw-text-opacity))
+        }
+        .text-zinc-200 {
+          --tw-text-opacity: 1;
+          color: rgb(228 228 231/var(--tw-text-opacity))
+        }
+        .text-zinc-300 {
+          --tw-text-opacity: 1;
+          color: rgb(212 212 216/var(--tw-text-opacity))
+        }
+        .text-zinc-400 {
+          --tw-text-opacity: 1;
+          color: rgb(161 161 170/var(--tw-text-opacity))
+        }
+        .text-zinc-500 {
+          --tw-text-opacity: 1;
+          color: rgb(113 113 122/var(--tw-text-opacity))
+        }
+        .text-zinc-600 {
+          --tw-text-opacity: 1;
+          color: rgb(82 82 91/var(--tw-text-opacity))
+        }
+        .text-white {
+          --tw-text-opacity: 1;
+          color: rgb(255 255 255/var(--tw-text-opacity))
+        }
+        .text-yellow-200 {
+          --tw-text-opacity: 1;
+          color: rgb(254 240 138/var(--tw-text-opacity))
+        }
+        .text-yellow-400 {
+          --tw-text-opacity: 1;
+          color: rgb(250 204 21/var(--tw-text-opacity))
+        }
+        .text-lime-400 {
+          --tw-text-opacity: 1;
+          color: rgb(190 242 100/var(--tw-text-opacity))
+        }
+        .text-lime-500 {
+          --tw-text-opacity: 1;
+          color: rgb(132 204 22/var(--tw-text-opacity))
+        }
+        .text-blue-300 {
+          --tw-text-opacity: 1;
+          color: rgb(147 197 253/var(--tw-text-opacity))
+        }
+        .text-blue-400 {
+          --tw-text-opacity: 1;
+          color: rgb(96 165 250/var(--tw-text-opacity))
+        }
+        .text-blue-500 {
+          --tw-text-opacity: 1;
+          color: rgb(59 130 246/var(--tw-text-opacity))
+        }
+        .text-red-500 {
+          --tw-text-opacity: 1;
+          color: rgb(239 68 68/var(--tw-text-opacity))
+        }
+        .underline {
+          text-decoration-line: underline
+        }
+        .no-underline {
+          text-decoration-line: none
+        }
+        .backdrop-blur-sm {
+          --tw-backdrop-blur: blur(4px);
+          -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+          backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)
+        }
+        .transition-all {
+          transition-property: all;
+          transition-timing-function: cubic-bezier(.4,0,.2,1);
+          transition-duration: .15s
+        }
+        .transition-colors {
+          transition-property: color,background-color,border-color,text-decoration-color,fill,stroke;
+          transition-timing-function: cubic-bezier(.4,0,.2,1);
+          transition-duration: .15s
+        }
+        .transition-transform {
+          transition-property: transform;
+          transition-timing-function: cubic-bezier(.4,0,.2,1);
+          transition-duration: .15s
+        }
+        .duration-200 {
+          transition-duration: .2s
+        }
+        .duration-300 {
+          transition-duration: .3s
+        }
+        .duration-500 {
+          transition-duration: .5s
+        }
+        .ease-in-out {
+          transition-timing-function: cubic-bezier(.4,0,.2,1)
+        }
+        .group:hover .panel-hover-content,.panel.panel-active .panel-hover-content {
+          --tw-scale-x: 1;
+          --tw-scale-y: 1;
+          transform: translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))
+        }
+        .group:hover .panel-main-content,.panel.panel-active .panel-main-content {
+          --tw-scale-x: .95;
+          --tw-scale-y: .95;
+          transform: translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))
+        }
+        @keyframes pulse {
+          50% {
+            opacity: .5
+          }
+        }
+        @keyframes pulse-glow {
+          0%,to {
+            text-shadow: 0 0 30px rgba(255,255,255,.5),0 0 12px rgba(255,255,255,.7)
+          }
+          50% {
+            text-shadow: 0 0 50px rgba(255,255,255,.7),0 0 20px rgba(255,255,255,.9)
+          }
+        }
+        @keyframes border-rotation {
+          0% {
+            --gradient-angle: 0deg
+          }
+          to {
+            --gradient-angle: 360deg
+          }
+        }
+        @keyframes hologram-shine {
+          0%,to {
+            background-position: -100% 0
+          }
+          50% {
+            background-position: 200% 0
+          }
+        }
+        @keyframes glow-rotation {
+          0% {
+            background-position: 50% 0
+          }
+          12.5% {
+            background-position: 100% 0
+          }
+          25% {
+            background-position: 100% 50%
+          }
+          37.5% {
+            background-position: 100% 100%
+          }
+          50% {
+            background-position: 50% 100%
+          }
+          62.5% {
+            background-position: 0 100%
+          }
+          75% {
+            background-position: 0 50%
+          }
+          87.5% {
+            background-position: 0 0
+          }
+          to {
+            background-position: 50% 0
+          }
+        }
+        .hidden {
+          display: none
+        }
+        .scale-90 {
+          --tw-scale-x: .9;
+          --tw-scale-y: .9;
+          transform: translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))
+        }
+        .break-all {
+          word-break: break-all
+        }
+        .flex {
+          display: flex
+        }
+        .table {
+          display: table
+        }
+        .pointer-events-none {
+          pointer-events: none
+        }
+        .opacity-0 {
+          opacity: 0
+        }
+        .m-0 {
+          margin: 0
+        }
+        .-mt-1 {
+          margin-top: -.25rem
+        }
+        .mb-2 {
+          margin-bottom: .5rem
+        }
+        .mb-3 {
+          margin-bottom: .75rem
+        }
+        .mb-4 {
+          margin-bottom: 1rem
+        }
+        .mb-8 {
+          margin-bottom: 2rem
+        }
+        .mt-1 {
+          margin-top: .25rem
+        }
+        .mt-12 {
+          margin-top: 3rem
+        }
+        .mt-2 {
+          margin-top: .5rem
+        }
+        .mt-3 {
+          margin-top: .75rem
+        }
+        .mt-4 {
+          margin-top: 1rem
+        }
+        .block {
+          display: block
+        }
+        .focus\:outline-none:focus {
+          outline: 2px solid transparent;
+          outline-offset: 2px
+        }
+        .hover\:scale-\[1\.03\]:hover {
+          --tw-scale-x: 1.03;
+          --tw-scale-y: 1.03;
+          transform: translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))
+        }
+        .hover\:border-white:hover {
+          --tw-border-opacity: 1;
+          border-color: rgb(255 255 255/var(--tw-border-opacity))
+        }
+        .hover\:bg-white:hover {
+          --tw-bg-opacity: 1;
+          background-color: rgb(255 255 255/var(--tw-bg-opacity))
+        }
+        .hover\:bg-zinc-600:hover {
+          --tw-bg-opacity: 1;
+          background-color: rgb(82 82 91/var(--tw-bg-opacity))
+        }
+        .hover\:bg-lime-500\/30:hover {
+          background-color: rgb(132 204 22/.3)
+        }
+        .hover\:bg-red-500\/30:hover {
+          background-color: rgb(239 68 68/.3)
+        }
+        .hover\:bg-blue-500\/30:hover {
+          background-color: rgb(59 130 246/.3)
+        }
+        .hover\:text-white:hover {
+          --tw-text-opacity: 1;
+          color: rgb(255 255 255/var(--tw-text-opacity))
+        }
+        @media (min-width:640px) {
+          .sm\:h-56 {
+            height: 14rem
+          }
+          .sm\:flex-row {
+            flex-direction: row
+          }
+          .sm\:space-y-0>:not([hidden])~:not([hidden]) {
+            --tw-space-y-reverse: 0;
+            margin-top: calc(0px * calc(1 - var(--tw-space-y-reverse)));
+            margin-bottom: calc(0px * var(--tw-space-y-reverse))
+          }
+          .sm\:space-x-3>:not([hidden])~:not([hidden]) {
+            --tw-space-x-reverse: 0;
+            margin-right: calc(.75rem * var(--tw-space-x-reverse));
+            margin-left: calc(.75rem * calc(1 - var(--tw-space-x-reverse)))
+          }
+          .sm\:p-6 {
+            padding: 1.5rem
+          }
+          .sm\:text-5xl {
+            font-size: 3rem;
+            line-height: 1
+          }
+        }
+        @media (min-width:768px) {
+          .md\:h-72 {
+            height: 18rem
+          }
+          .md\:gap-8 {
+            gap: 2rem
+          }
+          .md\:p-8 {
+            padding: 2rem
+          }
+          .md\:text-2xl {
+            font-size: 1.5rem;
+            line-height: 2rem
+          }
+          .md\:text-6xl {
+            font-size: 3.75rem;
+            line-height: 1
+          }
+          .md\:text-xl {
+            font-size: 1.25rem;
+            line-height: 1.75rem
+          }
+        }
+        @media (min-width:1024px) {
+          .lg\:sticky {
+            position: -webkit-sticky;
+            position: sticky
+          }
+          .lg\:top-0 {
+            top: 0
+          }
+          .lg\:order-none {
+            order: 0
+          }
+          .lg\:h-72 {
+            height: 18rem
+          }
+          .lg\:h-screen {
+            height: 100vh
+          }
+          .lg\:grid-cols-\[2fr_1fr\] {
+            grid-template-columns: 2fr 1fr
+          }
+          .lg\:grid-cols-2 {
+            grid-template-columns: repeat(2,minmax(0,1fr))
+          }
+          .lg\:flex {
+            display: flex
+          }
+          .lg\:hidden {
+            display: none
+          }
+          .lg\:gap-16 {
+            gap: 4rem
+          }
+          .lg\:overflow-y-auto {
+            overflow-y: auto
+          }
+          .lg\:border {
+            border-width: 1px
+          }
+          .lg\:border-zinc-700 {
+            --tw-border-opacity: 1;
+            border-color: rgb(63 63 70/var(--tw-border-opacity))
+          }
+          .lg\:mt-24 {
+            margin-top: 6rem
+          }
+        }
+        .bg-\[rgba\(10\,10\,10\,0\.2\)\] {
+          background-color: rgba(10,10,10,.2)
+        }
+    </style>
+</head>
+<body class="bg-black text-gray-200 min-h-screen font-mono relative">
+
+    <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr]">
+        <main class="relative p-4 sm:p-6 md:p-8 flex items-center justify-center lg:h-screen">
+             <div class="hidden lg:flex absolute inset-0 z-20 items-center justify-center pointer-events-none">
+                <h1 class="text-white font-bold animate-pulse-glow" style="font-size: clamp(6rem, 18vw, 14rem); line-height: 1;">s1d</h1>
+            </div>
+            <div class="z-10 w-full flex flex-col items-center">
+                <div class="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 lg:gap-16 lg:mt-24">
+                    <div class="group panel animated-border panel-blue animate-border-rotation relative flex items-center justify-center p-2 h-44 sm:h-56 lg:h-72 border-2 border-transparent text-zinc-600 transition-transform duration-500 ease-in-out hover:scale-[1.03] overflow-hidden cursor-pointer" tabindex="0" role="button" aria-expanded="false">
+                        <div class="panel-main-content text-center">
+                            <h2 class="font-lxgw font-bold text-4xl sm:text-5xl md:text-6xl">[<span class="text-blue-500">about</span>]</h2>
+                        </div>
+                        <div class="panel-hover-content absolute inset-0 grid grid-cols-2 grid-rows-2 opacity-0 scale-90 pointer-events-none">
+                            <a href="#" class="flex items-center justify-center no-underline text-blue-500 border border-blue-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-blue-500/30 outline-none"><span class="relative z-20">what</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-blue-500 border border-blue-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-blue-500/30 outline-none"><span class="relative z-20">why</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-blue-500 border border-blue-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-blue-500/30 outline-none"><span class="relative z-20">how</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-blue-500 border border-blue-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-blue-500/30 outline-none"><span class="relative z-20">me</span></a>
+                        </div>
+                    </div>
+                    <div class="group panel animated-border panel-red animate-border-rotation relative flex items-center justify-center p-2 h-44 sm:h-56 lg:h-72 border-2 border-transparent text-zinc-600 transition-transform duration-500 ease-in-out hover:scale-[1.03] overflow-hidden cursor-pointer" tabindex="0" role="button" aria-expanded="false">
+                         <div class="panel-main-content text-center">
+                            <h2 class="font-lxgw font-bold text-4xl sm:text-5xl md:text-6xl">[<span class="text-red-500">panel</span>]</h2>
+                        </div>
+                        <div class="panel-hover-content absolute inset-0 grid grid-cols-2 grid-rows-2 opacity-0 scale-90 pointer-events-none">
+                            <a href="#" class="flex items-center justify-center no-underline text-red-500 border border-red-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-red-500/30 outline-none"><span class="relative z-20">shortn</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-red-500 border border-red-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-red-500/30 outline-none"><span class="relative z-20">paste</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-red-500 border border-red-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-red-500/30 outline-none"><span class="relative z-20">image</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-red-500 border border-red-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-red-500/30 outline-none"><span class="relative z-20">misc</span></a>
+                        </div>
+                    </div>
+                    <div class="lg:h-72 flex flex-col items-center justify-center space-y-4 p-6 text-center order-first lg:order-none lg:border lg:border-zinc-700" style="background: linear-gradient(to bottom, rgba(10, 10, 10, 0.7), transparent);">
+                        <h1 class="lg:hidden text-white font-bold animate-pulse-glow text-8xl leading-none mb-4">s1d</h1>
+                        <p class="text-xl md:text-2xl italic">play-ground of the <span class="underline">internet</span></p>
+                        <p class="text-lg md:text-xl">one thing at a time</p>
+                        <button class="mt-4 px-10 py-3 text-white border-2 border-white transition-all duration-300 hover:bg-white hover:text-black hover:scale-105 focus:outline-none">start</button>
+                    </div>
+                    <div class="group panel animated-border panel-lime animate-border-rotation relative flex items-center justify-center p-2 h-44 sm:h-56 lg:h-72 border-2 border-transparent text-zinc-600 transition-transform duration-500 ease-in-out hover:scale-[1.03] overflow-hidden cursor-pointer" tabindex="0" role="button" aria-expanded="false">
+                        <div class="panel-main-content text-center">
+                            <h2 class="font-lxgw font-bold text-4xl sm:text-5xl md:text-6xl">[<span class="text-lime-500">contact</span>]</h2>
+                        </div>
+                        <div class="panel-hover-content absolute inset-0 grid grid-cols-2 grid-rows-2 opacity-0 scale-90 pointer-events-none">
+                            <a href="#" class="flex items-center justify-center no-underline text-lime-500 border border-lime-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-lime-500/30 outline-none"><span class="relative z-20">us</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-lime-500 border border-lime-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-lime-500/30 outline-none"><span class="relative z-20">him</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-lime-500 border border-lime-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-lime-500/30 outline-none"><span class="relative z-20">legal</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-lime-500 border border-lime-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-lime-500/30 outline-none"><span class="relative z-20">help</span></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-12 flex flex-wrap justify-center gap-x-6 gap-y-4">
+                    <a href="#" class="text-zinc-400 uppercase tracking-wider text-sm p-1 no-underline border-b border-transparent transition-colors duration-200 ease-in-out hover:text-white hover:border-white focus:outline-none">Privacy Policy</a>
+                    <a href="#" class="text-zinc-400 uppercase tracking-wider text-sm p-1 no-underline border-b border-transparent transition-colors duration-200 ease-in-out hover:text-white hover:border-white focus:outline-none">Terms of Service</a>
+                    <a href="#" class="text-zinc-400 uppercase tracking-wider text-sm p-1 no-underline border-b border-transparent transition-colors duration-200 ease-in-out hover:text-white hover:border-white focus:outline-none">API Docs</a>
+                    <a href="#" class="text-zinc-400 uppercase tracking-wider text-sm p-1 no-underline border-b border-transparent transition-colors duration-200 ease-in-out hover:text-white hover:border-white focus:outline-none">Donate</a>
+                </div>
+            </div>
+        </main>
+
+        <aside class="bg-gradient-to-br from-zinc-900 via-[#18181b] to-[#18181b] p-6 md:p-8 border-l border-zinc-800 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
+            <header class="mb-8 pb-4 border-b border-zinc-800">
+                <h2 class="font-mono font-bold text-3xl text-white tracking-[0.2em]">s1d-ebar</h2>
+                <p class="text-xs text-zinc-400 mt-1">Real-time Playground & Stats</p>
+            </header>
+            
+            <noscript>
+                <div class="bg-yellow-900/50 border border-yellow-700 rounded-lg p-4 text-yellow-200 text-sm">
+                    <p class="font-bold mb-2">JavaScript Disabled</p>
+                    <p>The real-time stats and interactive elements on this sidebar require JavaScript to function. Please enable it for the full experience.</p>
+                </div>
+            </noscript>
+
+            <div class="flex flex-col space-y-8">
+                
+                <section class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4" aria-labelledby="about-s1d">
+                    <h3 id="about-s1d" class="sr-only">About s1d</h3>
+                    <p class="text-sm text-gray-300 leading-relaxed">s1d is essentially a link shortener on steroids. We track user analytics on cookie approval (see ToS). APIs are available for business purposes - contact us for more info.</p>
+                </section>
+
+                <!-- PASSPORT CARD -->
+                <section class="passport-card p-4 relative" aria-labelledby="passport-heading">
+                    <div class="passport-watermark">s1d</div>
+                    <div class="passport-hologram animate-hologram-shine"></div>
+                    
+                    <div class="flex justify-between items-center pb-2 border-b border-zinc-700/50 relative z-10">
+                        <h3 id="passport-heading" class="font-bold text-white text-lg tracking-wider">NETIZEN PASSPORT</h3>
+                        <p class="text-xs text-lime-400">Status: <span class="font-bold">ACTIVE</span></p>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 mt-3 relative z-10">
+                        <div class="flex flex-col items-center space-y-2 shrink-0">
+                            <div class="passport-photo-box w-16 h-20 bg-blue-500/20 border-2 border-blue-400 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                            </div>
+                            <div class="fake-barcode"></div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs flex-grow">
+                            <div><span class="text-zinc-500 block text-[10px] uppercase">Surname</span><span class="font-semibold text-zinc-200">User</span></div>
+                            <div><span class="text-zinc-500 block text-[10px] uppercase">Given Name</span><span class="font-semibold text-zinc-200">Guest</span></div>
+                            <div class="col-span-2"><span class="text-zinc-500 block text-[10px] uppercase">Passport ID</span><span id="passport-id" class="text-blue-300 font-semibold tracking-wider text-[11px] break-all">LOADING...</span></div>
+                            <div><span class="text-zinc-500 block text-[10px] uppercase">Issued</span><span id="passport-issued" class="text-zinc-300">YYYY-MM-DD</span></div>
+                            <div><span class="text-zinc-500 block text-[10px] uppercase">Expires</span><span id="passport-expires" class="text-zinc-300">YYYY-MM-DD</span></div>
+                            <div class="col-span-2"><span class="text-zinc-500 block text-[10px] uppercase">Authority</span><span class="text-zinc-300">s1d.me/SYS_ADMIN</span></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-2 flex justify-between items-end relative z-10">
+                        <div>
+                            <span class="text-zinc-500 block text-[10px] uppercase">Signature</span>
+                            <p class="font-comic text-zinc-200 text-lg -mt-1">Guest</p>
+                        </div>
+                        <div class="digital-stamp">VALIDATED</div>
+                    </div>
+                    
+                    <div class="mrz-zone text-zinc-400 text-[10px] leading-tight mt-3 pt-2 border-t border-zinc-700/50">
+                        <p id="mrz-line1">P<GUEST<<USER<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<</p>
+                        <p id="mrz-line2">IDGUESTUSER-SESSION-ID<<<<<<<<<<<<<7</p>
+                    </div>
+                </section>
+                
+                <!-- SITE GRAPH -->
+                <section class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4" aria-labelledby="graph-heading">
+                    <h3 id="graph-heading" class="text-sm font-bold text-white uppercase tracking-wider mb-3">Site Graph</h3>
+                    <div id="interactive-graph-container" class="relative">
+                        <div class="interactive-graph" id="interactive-graph">
+                             <noscript><div class="no-js-message">Interactive graph requires JavaScript.</div></noscript>
+                        </div>
+                        <div class="absolute top-0 right-0 flex flex-col space-y-1 z-10">
+                            <button id="zoom-in" aria-label="Zoom In" class="w-7 h-7 bg-zinc-700/80 hover:bg-zinc-600 rounded-md text-zinc-200 text-lg leading-none transition-colors focus:outline-none">+</button>
+                            <button id="zoom-out" aria-label="Zoom Out" class="w-7 h-7 bg-zinc-700/80 hover:bg-zinc-600 rounded-md text-zinc-200 text-lg leading-none transition-colors focus:outline-none">-</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SERVER STATUS -->
+                <section class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4" aria-labelledby="status-heading">
+                    <h3 id="status-heading" class="text-sm font-bold text-white uppercase tracking-wider mb-3">Server Status</h3>
+                    <div class="bg-zinc-900/50 p-3 rounded-md">
+                        <div class="flex gap-px" id="server-status-bar">
+                            <div class="h-6 flex-1 bg-zinc-700 animate-pulse"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-zinc-500 mt-1">
+                            <span>90 days ago</span>
+                            <span>Today</span>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- SERVER LOAD -->
+                <section class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4" aria-labelledby="load-heading">
+                    <h3 id="load-heading" class="text-sm font-bold text-white uppercase tracking-wider mb-3">Server Load</h3>
+                    <div class="bg-zinc-900/70 p-4 rounded-md">
+                        <div id="server-load-graph-container" class="w-full h-40 flex items-center justify-center text-zinc-500 text-sm"><p>Loading graph...</p></div>
+                        <div id="server-load-legend" class="flex flex-wrap gap-x-4 gap-y-1 justify-center text-xs mt-3"></div>
+                    </div>
+                </section>
+
+                <!-- STATS -->
+                <section class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4" aria-labelledby="stats-heading">
+                    <h3 id="stats-heading" class="text-sm font-bold text-white uppercase tracking-wider mb-3">Random Stats</h3>
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div class="bg-zinc-900/50 p-3 rounded-md"><p class="text-xs text-zinc-400">Links Active</p><p id="stat-links" class="text-xl text-white font-bold">14,831</p></div>
+                        <div class="bg-zinc-900/50 p-3 rounded-md"><p class="text-xs text-zinc-400">Total Clicks</p><p id="stat-clicks" class="text-xl text-white font-bold">983,102</p></div>
+                        <div class="bg-zinc-900/50 p-3 rounded-md"><p class="text-xs text-zinc-400">Users Online</p><p id="stat-users" class="text-xl text-white font-bold">2,415</p></div>
+                        <div class="bg-zinc-900/50 p-3 rounded-md"><p class="text-xs text-zinc-400">API Calls</p><p id="stat-api" class="text-xl text-white font-bold">1,732,842</p></div>
+                    </div>
+                </section>
+                
+                <!-- BULLETIN -->
+                <section class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4" aria-labelledby="bulletin-heading">
+                    <h3 id="bulletin-heading" class="text-sm font-bold text-white uppercase tracking-wider mb-3">Playground Bulletin</h3>
+                    <div class="bg-zinc-900/50 p-4 space-y-3 text-xs text-zinc-300 rounded-md">
+                        <p><span class="text-lime-400">[Update]</span> New API endpoints for enterprise users now live.</p>
+                        <p><span class="text-yellow-400">[Notice]</span> Scheduled maintenance on Dec 25th, 02:00 UTC.</p>
+                        <p><span class="text-blue-400">[Info]</span> Welcome to the new s1d playground! Explore and have fun.</p>
+                    </div>
+                </section>
+                
+                <!-- USER INFO -->
+                <section class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4" aria-labelledby="userinfo-heading">
+                    <h3 id="userinfo-heading" class="text-xs italic text-gray-400 mb-3">i thought it would be funny to have more information about you here</h3>
+                    <div id="user-info-container" class="text-xs break-words space-y-2 pt-3 border-t border-gray-700 text-gray-400">
+                        <p>Gathering session data...</p>
+                    </div>
+                </section>
+            </div>
+        </aside>
+    </div>
+
+    <!-- 
+      OPTIMIZATION:
+      Moved render-blocking D3.js script from <head> to the end of <body> 
+      so the page content can load and display before the script is downloaded.
+    -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- INTERACTIVE PANEL LOGIC ---
+            const panels = document.querySelectorAll('.panel'); 
+            const closeAllPanels = (exceptThisPanel = null) => {
+                panels.forEach(p => {
+                    if (p !== exceptThisPanel) {
+                        p.classList.remove('panel-active');
+                        p.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            };
+            
+            panels.forEach(panel => {
+                const handleClick = (e) => {
+                    // Don't interfere with clicks on the actual links inside
+                    if (e.target.closest('a')) return;
+                    
+                    const wasActive = panel.classList.contains('panel-active');
+                    closeAllPanels(panel); 
+                    if (!wasActive) {
+                        panel.classList.add('panel-active');
+                        panel.setAttribute('aria-expanded', 'true');
+                    } else {
+                        panel.classList.remove('panel-active');
+                        panel.setAttribute('aria-expanded', 'false');
+                    }
+                    e.stopPropagation();
+                };
+
+                panel.addEventListener('click', handleClick);
+                // Allow Enter/Space key to toggle the panel for accessibility
+                panel.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleClick(e);
+                    }
+                });
+            });
+            
+            document.addEventListener('click', (e) => { 
+                if (!e.target.closest('.panel')) {
+                    closeAllPanels();
+                } 
+            });
+
+            // --- USER & PASSPORT INFO ---
+            const displayUserInfo = () => {
+                const container = document.getElementById("user-info-container");
+                const passportIdEl = document.getElementById("passport-id");
+                const passportIssuedEl = document.getElementById("passport-issued");
+                const passportExpiresEl = document.getElementById("passport-expires");
+                const mrzLine1El = document.getElementById('mrz-line1');
+                const mrzLine2El = document.getElementById('mrz-line2');
+                
+                if (!container) return;
+                container.innerHTML = '';
+
+                const addInfo = (label, value) => {
+                    const p = document.createElement('p');
+                    p.innerHTML = `<span class="text-zinc-500">${label}:</span> <span class="text-zinc-300">${value || 'N/A'}</span>`;
+                    container.appendChild(p);
+                };
+                
+                const padString = (str, len) => (str + '<'.repeat(len)).slice(0, len);
+
+                const generateMRZ = (id) => {
+                    const line1 = padString('P<NETGUEST<<USER', 44);
+                    const idPart = padString(id.replace(/[\.\-]/g, '').slice(0, 15), 23);
+                    const dob = '850101';
+                    const expiry = new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().slice(2, 10).replace(/-/g, '').slice(0, 6);
+                    const line2 = padString(`${idPart}<${dob}8M${expiry}3<<<<<<<<<<<`, 43) + '8';
+
+                    if (mrzLine1El) mrzLine1El.textContent = line1;
+                    if (mrzLine2El) mrzLine2El.textContent = line2;
+                }
+
+                addInfo('Agent', navigator.userAgent);
+                addInfo('Platform', navigator.platform);
+                addInfo('Language', navigator.language);
+                addInfo('Screen Res', `${screen.width}x${screen.height}`);
+                addInfo('Timezone', Intl.DateTimeFormat().resolvedOptions().timeZone);
+                
+                fetch("https://api.ipify.org?format=json")
+                    .then(res => res.json())
+                    .then(data => {
+                        addInfo('IPv4', data.ip);
+                        if (passportIdEl) passportIdEl.textContent = data.ip.replaceAll('.', '-');
+                        generateMRZ(data.ip);
+                    })
+                    .catch(() => {
+                        const unavailableMsg = 'Unavailable';
+                        addInfo('IPv4', unavailableMsg);
+                        if (passportIdEl) passportIdEl.textContent = "REDACTED";
+                        generateMRZ("REDACTED");
+                    });
+                
+                fetch("https://api64.ipify.org?format=json")
+                    .then(res => res.json())
+                    .then(data => addInfo('IPv6', data.ip))
+                    .catch(() => addInfo('IPv6', 'Unavailable'));
+                
+                if (passportIssuedEl) { 
+                    passportIssuedEl.textContent = new Date().toLocaleDateString('en-CA'); 
+                }
+                if (passportExpiresEl) {
+                    const expiryDate = new Date();
+                    expiryDate.setMonth(expiryDate.getMonth() + 6);
+                    passportExpiresEl.textContent = expiryDate.toLocaleDateString('en-CA');
+                }
+            };
+            
+            // --- SERVER STATUS BAR ---
+            const generateServerStatusBar = () => {
+                const statusBar = document.getElementById("server-status-bar");
+                if (!statusBar) return;
+
+                statusBar.innerHTML = "";
+                const colors = { operational: "bg-green-500", degraded: "bg-yellow-500", outage: "bg-red-500" };
+                const tooltips = { operational: "All systems operational.", degraded: "Degraded performance.", outage: "Service outage." };
+                
+                for (let i = 0; i < 90; i++) {
+                    const day = document.createElement("div");
+                    day.className = "h-6 flex-1 transition-colors duration-200";
+                    
+                    let rand = Math.random();
+                    let statusKey = rand > 0.98 ? 'outage' : (rand > 0.95 ? 'degraded' : 'operational');
+                    
+                    day.classList.add(colors[statusKey]);
+                    day.title = `Day ${90 - i} ago: ${tooltips[statusKey]}`;
+                    statusBar.appendChild(day);
+                }
+            };
+            
+            // --- SERVER LOAD GRAPH ---
+            const updateServerLoadGraph = () => {
+                const container = document.getElementById('server-load-graph-container');
+                const legendContainer = document.getElementById('server-load-legend');
+                if (!container || !legendContainer) return;
+
+                const width = 300, height = 120, numPoints = 30, maxTotalUsage = 400;
+                const cores = [ 
+                    { name: 'Core 1', color: 'rgba(59, 130, 246, 0.7)', peak: 80 }, 
+                    { name: 'Core 2', color: 'rgba(239, 68, 68, 0.7)', peak: 60 }, 
+                    { name: 'Core 3', color: 'rgba(16, 185, 129, 0.7)', peak: 120 } 
+                ];
+
+                const coreData = cores.map(core => Array.from({ length: numPoints }, () => Math.random() * core.peak));
+                const stackedData = [];
+                for (let i = 0; i < numPoints; i++) {
+                    let cumulativeHeight = 0, point = [];
+                    for (let j = 0; j < cores.length; j++) { 
+                        cumulativeHeight += coreData[j][i]; 
+                        point.push(cumulativeHeight); 
+                    }
+                    stackedData.push(point);
+                }
+
+                const pathStrings = cores.map((_, coreIndex) => `M 0,${height} L ${stackedData.map((point, i) => `${((i / (numPoints - 1)) * width).toFixed(2)},${(height - (point[coreIndex] / maxTotalUsage) * height).toFixed(2)}`).join(' L ')} L ${width},${height} Z`);
+                
+                let gridLines = '';
+                for (let i = 0; i <= 4; i++) {
+                    const y = height - (i * (height / 4));
+                    gridLines += `<line x1="30" y1="${y}" x2="${width}" y2="${y}" stroke="#3f3f46" stroke-width="0.5"/><text x="0" y="${y+3}" fill="#a1a1aa" font-size="10">${i * 25}%</text>`;
+                }
+                
+                container.innerHTML = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" class="w-full h-full"><g>${gridLines}</g>${cores.map((core, i) => `<path d="${pathStrings[cores.length - 1 - i]}" fill="${cores[cores.length - 1 - i].color}" style="transition: d 0.5s ease-in-out;" />`).join('')}</svg>`;
+                legendContainer.innerHTML = cores.map(core => `<div class="flex items-center space-x-2"><div class="w-3 h-3 rounded-sm" style="background-color: ${core.color};"></div><span>${core.name}</span></div>`).join('');
+            };
+
+            // --- RANDOM STATS UPDATER ---
+            const updateStats = () => {
+                const increments = { 
+                    "stat-links": 1, 
+                    "stat-clicks": Math.floor(Math.random() * 20) + 5, 
+                    "stat-users": (Math.random() > 0.5 ? 1 : -1) * Math.floor(5 * Math.random()), 
+                    "stat-api": Math.floor(Math.random() * 40) + 10
+                };
+                for (const id in increments) {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        let currentVal = parseInt(el.textContent.replace(/,/g, ""), 10) + increments[id];
+                        el.textContent = currentVal.toLocaleString("en-US");
+                    }
+                }
+            };
+            
+            // --- D3 SITE GRAPH ---
+            const createInteractiveGraph = () => {
+                const graphElement = document.getElementById("interactive-graph");
+                if (!graphElement) return;
+
+                const graphData = {
+                    nodes: [
+                        { id: 's1d', title: 's1d', isHub: true, radius: 22, color: '#FBBF24', url: '#' },
+                        { id: 'about', title: 'about', isHub: true, radius: 16, color: '#3B82F6', url: '#' },
+                        { id: 'panel', title: 'panel', isHub: true, radius: 16, color: '#EF4444', url: '#' },
+                        { id: 'contact', title: 'contact', isHub: true, radius: 16, color: '#84CC16', url: '#' },
+                        ...['what', 'why', 'how', 'me'].map(n => ({ id: n, title: n, isHub: false, radius: 10, color: '#3B82F6', url: '#' })),
+                        ...['shortn', 'paste', 'image', 'misc'].map(n => ({ id: n, title: n, isHub: false, radius: 10, color: '#EF4444', url: '#' })),
+                        ...['us', 'him', 'legal', 'help'].map(n => ({ id: n, title: n, isHub: false, radius: 10, color: '#84CC16', url: '#' })),
+                    ],
+                    links: [
+                        { source: 's1d', target: 'about' }, { source: 's1d', target: 'panel' }, { source: 's1d', target: 'contact' },
+                        ...['what', 'why', 'how', 'me'].map(n => ({ source: 'about', target: n })),
+                        ...['shortn', 'paste', 'image', 'misc'].map(n => ({ source: 'panel', target: n })),
+                        ...['us', 'him', 'legal', 'help'].map(n => ({ source: 'contact', target: n })),
+                    ]
+                };
+
+                let svg, g, simulation, zoom;
+
+                const initGraph = () => {
+                    const width = graphElement.clientWidth;
+                    const height = graphElement.clientHeight;
+                    graphElement.innerHTML = ''; 
+
+                    svg = d3.select(graphElement).append("svg")
+                        .attr("width", "100%").attr("height", "100%")
+                        .attr("viewBox", `0 0 ${width} ${height}`)
+                        .style("display", "block");
+
+                    g = svg.append("g");
+
+                    zoom = d3.zoom().scaleExtent([0.4, 4]).on("zoom", (event) => {
+                        g.attr("transform", event.transform);
+                        updateLabelsVisibility(event.transform.k);
+                    });
+                    svg.call(zoom);
+
+                    simulation = d3.forceSimulation(graphData.nodes)
+                        .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(d => d.source.isHub ? 80 : 45).strength(1))
+                        .force("charge", d3.forceManyBody().strength(-300))
+                        .force("center", d3.forceCenter(width / 2, height / 2).strength(0.8))
+                        .force("collision", d3.forceCollide().radius(d => d.radius + 8));
+
+                    const link = g.append("g").selectAll("line")
+                        .data(graphData.links).enter().append("line")
+                        .attr("stroke", "#4b5563").attr("stroke-opacity", 0.7);
+
+                    const nodeGroup = g.append("g").selectAll("g")
+                        .data(graphData.nodes).enter().append("g")
+                        .style("cursor", "pointer")
+                        .call(drag(simulation))
+                        .on("click", (event, d) => { event.stopPropagation(); window.location.href = d.url; });
+
+                    nodeGroup.append("circle")
+                        .attr("r", d => d.radius)
+                        .attr("fill", d => d.color)
+                        .attr("stroke", d => d3.color(d.color).darker(0.7))
+                        .attr("stroke-width", 2.5);
+
+                    nodeGroup.append("text")
+                        .attr("class", d => d.isHub ? "graph-label" : "graph-label leaf-label")
+                        .attr("dy", "0.35em")
+                        .text(d => d.title);
+                    
+                    updateLabelsVisibility(1);
+
+                    simulation.on("tick", () => {
+                        link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+                            .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+                        nodeGroup.attr("transform", d => `translate(${d.x},${d.y})`);
+                    });
+                };
+
+                const updateLabelsVisibility = (scale) => g.selectAll(".leaf-label").style("opacity", scale > 1.4 ? 1 : 0);
+
+                const drag = (simulation) => {
+                    function dragstarted(event, d) { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
+                    function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
+                    function dragended(event, d) { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
+                    return d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended);
+                }
+
+                d3.select("#zoom-in").on("click", () => svg.transition().duration(250).call(zoom.scaleBy, 1.3));
+                d3.select("#zoom-out").on("click", () => svg.transition().duration(250).call(zoom.scaleBy, 1 / 1.3));
+
+                initGraph();
+                let resizeTimer;
+                window.addEventListener("resize", () => {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(initGraph, 250);
+                });
+            };
+
+            // --- INITIALIZATION ---
+            displayUserInfo();
+            generateServerStatusBar();
+            updateServerLoadGraph();
+            updateStats();
+            createInteractiveGraph();
+            
+            setInterval(updateStats, 1200);
+            setInterval(updateServerLoadGraph, 5000);
+        });
+    </script>
 </body>
-<script src="{{ url_for('static', filename='script.js') }}"></script>
 </html>
